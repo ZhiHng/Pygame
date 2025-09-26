@@ -20,11 +20,26 @@ while True:
         if event.type == pygame.QUIT: #pygame.QUIT is the event when the tab 'X' is clicked
             pygame.quit()
             exit() #break technically can but sys.exit() closes all code from any other that is also running
+        if event.type == pygame.MOUSEBUTTONUP:
+            print('mouse up')
+        if event.type == pygame.MOUSEMOTION: #returns a tuple (x, y) when mouse move
+            print(event.pos)
 
     screen.blit(test_surface, (0, 0)) #put surface on main surface
     screen.blit(text_surface, (300, 50))
     #screen.blit(player_surface, player_rect)
     #player_rect.left += 1  to move right cuz u move the rectangle and the image moves based on the rectangle
+
+    #snail_rect.x -= 4  to move the snail
+    #if snail_rect.right < 0: snail_rect.left = 800
+
+    """
+    if player_rect.colliderect(snail_rect):  returns 0 or 1. python converts 1 into true and 0 is false
+        print('collision')
+    mouse_pos = pygame.mouse.get_pos()
+    if player_rect.collidepoint((x, y))  (x,y) can be changed with mouse_pos
+        print(pygame.mouse.get_pressed())  returns (false, false, false) depending on which mouse key pressed become true
+    """
 
     pygame.display.update() #'refreshes' screen
     clock.tick(60) #ensure that the while loop only loops 60 times per sec
