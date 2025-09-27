@@ -10,8 +10,8 @@ test_font = pygame.font.Font(None, 50)
 test_surface = pygame.Surface((100, 200))
 test_surface.fill('Red')
 #img_surface = pygame.image.load('graphics/Sky.png').convert_alpha()  convert() makes the img easier for python to use. add alpha to remove alpha values
-text_surface = test_font.render('Game', True, 'Green')
-
+score_surface = test_font.render('Game', True, 'Green')
+score_rect = score_surface.get_rect(center = (400,50))
 #player_surface = pygame.image.load('file').convert_alpha()
 #player_rect = player_surface.get_rect(midbottom = (80,300))  basically sets the reference point
 
@@ -26,7 +26,9 @@ while True:
             print(event.pos)
 
     screen.blit(test_surface, (0, 0)) #put surface on main surface
-    screen.blit(text_surface, (300, 50))
+    pygame.draw.rect(screen,'Pink', score_rect, 6, 20) #make 2 if u want the inner fill with border
+    pygame.draw.rect(screen,'Pink', score_rect, 0, 20) #shapes at 1.19.09 vid  #the 6 represents border #20 represents rounding radius for corner
+    screen.blit(score_surface, score_rect)
     #screen.blit(player_surface, player_rect)
     #player_rect.left += 1  to move right cuz u move the rectangle and the image moves based on the rectangle
 
