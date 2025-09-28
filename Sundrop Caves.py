@@ -181,9 +181,18 @@ while True:
                 selectedTile = midRight
             else:
                 selectedTile = mid
-            
-            position = (MID_SCREENX + ((j - player['x']) * TILE_SIZE[0]), MID_SCREENY + ((i - player['y']) * TILE_SIZE[1]))
+            tileX = MID_SCREENX + ((j - player['x']) * TILE_SIZE[0])
+            tileY = MID_SCREENY + ((i - player['y']) * TILE_SIZE[1])
+            position = (tileX, tileY)
             screen.blit(selectedTile, position)
+            if i == 0:
+                if j % 3 == 0:
+                    wallTile = wall[2]
+                elif j % 2 == 0:
+                    wallTile = wall[1]
+                else:
+                    wallTile = wall[0]
+                screen.blit(wallTile, (tileX, tileY - TILE_SIZE[1]))
             
     pygame.display.update()
     clock.tick(60)
