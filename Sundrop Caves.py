@@ -7,12 +7,13 @@ import math
 
 #pygame init
 pygame.init()
-screen = pygame.display.set_mode((800, 400))
+TILE_SIZE = (32, 32)
+SCREEN_SIZE = (800, 400)
+MID_SCREENX = SCREEN_SIZE[0] / 2 - TILE_SIZE[0]
+MID_SCREENY = SCREEN_SIZE[1] / 2 - TILE_SIZE[1]
+screen = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption('Sundrop Caves')
 clock = pygame.time.Clock()
-MID_SCREENX = 368
-MID_SCREENY = 168
-TILE_SIZE = (32, 32)
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -141,23 +142,43 @@ def clear_fog(player):
 
 #-------------GAME----------------#
 initialize_game(game_map, player)
+moving, upDown, leftRight = False, 0, 0
+cycles = 0
 
 while True:
+    if moving == True:
+        if upDown != 0:
+            player['y'] += upDown * 0.1
+        else:
+            player['x'] += leftRight * 0.1
+        cycles += 1
+
+        if cycles == 10:
+            moving = False
+            upDown = 0
+            leftRight = 0
+            cycles = 0
+            player['x'], player['y'] = round(player['x']), round(player['y'])
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-
-        if event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN and moving == False:
             if event.key == pygame.K_w:
-                player['y'] -= 1
+                moving = True
+                upDown = -1
             elif event.key == pygame.K_a:
-                player['x'] -= 1
+                moving = True
+                leftRight = -1
             elif event.key == pygame.K_s:
-                player['y'] += 1
+                moving = True
+                upDown = 1
             elif event.key == pygame.K_d:
-                player['x'] += 1
+                moving = True
+                leftRight = 1
 
+    screen.fill((0, 0, 0))
     #Adding ground tile images
     for i in range(MAP_HEIGHT):
         for j in range(MAP_WIDTH):
@@ -181,9 +202,15 @@ while True:
                 selectedTile = midRight
             else:
                 selectedTile = mid
+
             tileX = MID_SCREENX + ((j - player['x']) * TILE_SIZE[0])
             tileY = MID_SCREENY + ((i - player['y']) * TILE_SIZE[1])
-            position = (tileX, tileY)
+
+            #Will not blit those out of screen
+            if tileX < 0 - TILE_SIZE[0] or tileX > SCREEN_SIZE[0] + TILE_SIZE[0] or tileY < 0 - TILE_SIZE[1] or tileY > SCREEN_SIZE[1] + TILE_SIZE[1]:
+                continue
+
+            position = (round(tileX), round(tileY))
             screen.blit(selectedTile, position)
             if i == 0:
                 if j % 3 == 0:
@@ -192,7 +219,7 @@ while True:
                     wallTile = wall[1]
                 else:
                     wallTile = wall[0]
-                screen.blit(wallTile, (tileX, tileY - TILE_SIZE[1]))
+                screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
             
     pygame.display.update()
     clock.tick(60)
