@@ -7,10 +7,10 @@ import math
 
 #pygame init
 pygame.init()
-TILE_SIZE = (32, 32)
+TILE_SIZE = (96, 96)
 SCREEN_SIZE = (800, 400)
-MID_SCREENX = SCREEN_SIZE[0] / 2 - TILE_SIZE[0]
-MID_SCREENY = SCREEN_SIZE[1] / 2 - TILE_SIZE[1]
+MID_SCREENX = SCREEN_SIZE[0] / 2 - TILE_SIZE[0] / 2
+MID_SCREENY = SCREEN_SIZE[1] / 2 - TILE_SIZE[1] / 2
 screen = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption('Sundrop Caves')
 clock = pygame.time.Clock()
@@ -32,6 +32,13 @@ wall = [tiles[0], tiles[1], tiles[2]]
 topLeft, topMid, topRight = tiles[12], tiles[13], tiles[14]
 midLeft, mid, midRight = tiles[24], tiles[25], tiles[26]
 botLeft, botMid, botRight = tiles[36], tiles[37], tiles[38]
+
+fullFog = pygame.Surface(TILE_SIZE)
+fullFog.fill((0, 0, 0))
+fullFog.set_alpha(150)
+halfFog = pygame.Surface(TILE_SIZE)
+halfFog.fill((0, 0, 0))
+halfFog.set_alpha(100)
 
 #game init
 player = {}
@@ -159,6 +166,7 @@ while True:
             leftRight = 0
             cycles = 0
             player['x'], player['y'] = round(player['x']), round(player['y'])
+            clear_fog(player)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -212,6 +220,14 @@ while True:
 
             position = (round(tileX), round(tileY))
             screen.blit(selectedTile, position)
+
+            #blit fog
+            vision = math.floor(player['torch'] / 2)
+            if fog[i][j] == '?':
+                screen.blit(fullFog, position)
+            elif abs(i - player['y']) > vision or abs(j - player['x']) > vision:
+                screen.blit(halfFog, position)
+
             if i == 0:
                 if j % 3 == 0:
                     wallTile = wall[2]
