@@ -7,7 +7,7 @@ import math
 
 #pygame init
 pygame.init()
-TILE_SIZE = (96, 96)
+TILE_SIZE = (64, 64)
 SCREEN_SIZE = (800, 400)
 MID_SCREENX = SCREEN_SIZE[0] / 2 - TILE_SIZE[0] / 2
 MID_SCREENY = SCREEN_SIZE[1] / 2 - TILE_SIZE[1] / 2
@@ -32,6 +32,22 @@ wall = [tiles[0], tiles[1], tiles[2]]
 topLeft, topMid, topRight = tiles[12], tiles[13], tiles[14]
 midLeft, mid, midRight = tiles[24], tiles[25], tiles[26]
 botLeft, botMid, botRight = tiles[36], tiles[37], tiles[38]
+
+#Extract characters
+charSheet = pygame.image.load('DwarvenDelve/DwarvenDelve/Characters/Dwarf/BlueMiner.png').convert_alpha()
+charAnims = []
+map_width, map_height = charSheet.get_size()
+for y in range(0, map_height, TILE_HEIGHT):
+    for x in range(0, map_width, TILE_WIDTH):
+        rect = pygame.Rect(x, y, TILE_WIDTH, TILE_HEIGHT)
+        tile = charSheet.subsurface(rect)
+        scaled_tile = pygame.transform.scale(tile, TILE_SIZE)  # Double the size
+        charAnims.append(scaled_tile)
+
+charFront = [charAnims[13], charAnims[16], charAnims[19], charAnims[21]]
+charBack = [charAnims[49], charAnims[52], charAnims[55], charAnims[58]]
+charLeft = [pygame.transform.flip(charAnims[85],True,False), pygame.transform.flip(charAnims[88],True,False), pygame.transform.flip(charAnims[91],True,False), pygame.transform.flip(charAnims[94],True,False)]
+charRight = [charAnims[85], charAnims[88], charAnims[91], charAnims[94]]
 
 fullFog = pygame.Surface(TILE_SIZE)
 fullFog.fill((0, 0, 0))
@@ -151,6 +167,7 @@ def clear_fog(player):
 initialize_game(game_map, player)
 moving, upDown, leftRight = False, 0, 0
 cycles = 0
+playerAnim = charFront[0]
 
 while True:
     if moving == True:
@@ -236,6 +253,8 @@ while True:
                 else:
                     wallTile = wall[0]
                 screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
+
+    screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY))
             
     pygame.display.update()
     clock.tick(60)
