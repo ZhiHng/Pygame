@@ -44,10 +44,16 @@ for y in range(0, map_height, TILE_HEIGHT):
         scaled_tile = pygame.transform.scale(tile, TILE_SIZE)  # Double the size
         charAnims.append(scaled_tile)
 
-charFront = [charAnims[13], charAnims[16], charAnims[19], charAnims[21]]
+charFront = [charAnims[13], charAnims[16], charAnims[19], charAnims[22]]
 charBack = [charAnims[49], charAnims[52], charAnims[55], charAnims[58]]
 charLeft = [pygame.transform.flip(charAnims[85],True,False), pygame.transform.flip(charAnims[88],True,False), pygame.transform.flip(charAnims[91],True,False), pygame.transform.flip(charAnims[94],True,False)]
 charRight = [charAnims[85], charAnims[88], charAnims[91], charAnims[94]]
+
+#Character animations
+walkFront = [charFront[0], charFront[1], charFront[0], charFront[3], charFront[0]]
+walkBack = [charBack[0], charBack[1], charBack[0], charBack[3], charBack[0]]
+walkLeft = [charLeft[0], charLeft[1], charLeft[0], charLeft[3], charLeft[0]]
+walkRight = [charRight[0], charRight[1], charRight[0], charRight[3], charRight[0]]
 
 fullFog = pygame.Surface(TILE_SIZE)
 fullFog.fill((0, 0, 0))
@@ -165,19 +171,30 @@ def clear_fog(player):
 
 #-------------GAME----------------#
 initialize_game(game_map, player)
-moving, upDown, leftRight = False, 0, 0
-cycles = 0
-playerAnim = charFront[0]
+#Player animation variables
+moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
 
 while True:
     if moving == True:
-        if upDown != 0:
-            player['y'] += upDown * 0.1
-        else:
-            player['x'] += leftRight * 0.1
         cycles += 1
-
-        if cycles == 10:
+        if upDown != 0:
+            player['y'] += upDown * 0.05
+            if upDown == 1:
+                if cycles % 4 == 0 and cycles != 0:
+                    playerAnim = walkFront[int((cycles / 4) - 1)] 
+            else:
+                if cycles % 4 == 0 and cycles != 0:
+                    playerAnim = walkBack[int((cycles / 4) - 1)]       
+        else:
+            player['x'] += leftRight * 0.05
+            if leftRight == 1:
+                if cycles % 4 == 0 and cycles != 0:
+                    playerAnim = walkRight[int((cycles / 4) - 1)] 
+            else:
+                if cycles % 4 == 0 and cycles != 0:
+                    playerAnim = walkLeft[int((cycles / 4) - 1)]  
+        
+        if cycles == 20:
             moving = False
             upDown = 0
             leftRight = 0
