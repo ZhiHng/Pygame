@@ -63,6 +63,11 @@ idleBack = [charBack[0], charBack[2]]
 idleLeft = [charLeft[0], charLeft[2]]
 idleRight = [charRight[0], charRight[2]]
 
+#Extract ores
+copperOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/CopperOre.png'), TILE_SIZE)
+silverOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/SilverOre.png'), TILE_SIZE)
+goldOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/GoldOre.png'), TILE_SIZE)
+
 fullFog = pygame.Surface(TILE_SIZE)
 fullFog.fill((0, 0, 0))
 fullFog.set_alpha(150)
@@ -279,9 +284,19 @@ while True:
             position = (round(tileX), round(tileY))
             screen.blit(selectedTile, position)
 
+            #blit ores
+            if game_map[i][j] == 'C':
+                screen.blit(copperOre, position)
+            elif game_map[i][j] == 'S':
+                screen.blit(silverOre, position)
+            elif game_map[i][j] == 'G':
+                screen.blit(goldOre, position)
+
             #blit fog
+            
             vision = math.floor(player['torch'] / 2)
             if fog[i][j] == '?':
+                screen.blit(selectedTile, position) #remove any ores not discovered
                 screen.blit(fullFog, position)
             elif abs(i - player['y']) > vision or abs(j - player['x']) > vision:
                 screen.blit(halfFog, position)
@@ -295,7 +310,7 @@ while True:
                     wallTile = wall[0]
                 screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
 
-    screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY))
+    screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
             
     pygame.display.update()
     clock.tick(60)
