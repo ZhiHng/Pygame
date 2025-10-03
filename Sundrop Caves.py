@@ -7,13 +7,17 @@ import math
 
 #pygame init
 pygame.init()
-TILE_SIZE = (64, 64)
+TILE_SIZE = (48, 48)
 SCREEN_SIZE = (800, 400)
 MID_SCREENX = SCREEN_SIZE[0] / 2 - TILE_SIZE[0] / 2
 MID_SCREENY = SCREEN_SIZE[1] / 2 - TILE_SIZE[1] / 2
 screen = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption('Sundrop Caves')
 clock = pygame.time.Clock()
+
+last_frame_time = 0
+frame_duration = 300
+frame_index = 0
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -54,6 +58,10 @@ walkFront = [charFront[0], charFront[1], charFront[0], charFront[3], charFront[0
 walkBack = [charBack[0], charBack[1], charBack[0], charBack[3], charBack[0]]
 walkLeft = [charLeft[0], charLeft[1], charLeft[0], charLeft[3], charLeft[0]]
 walkRight = [charRight[0], charRight[1], charRight[0], charRight[3], charRight[0]]
+idleFront = [charFront[0], charFront[2]]
+idleBack = [charBack[0], charBack[2]]
+idleLeft = [charLeft[0], charLeft[2]]
+idleRight = [charRight[0], charRight[2]]
 
 fullFog = pygame.Surface(TILE_SIZE)
 fullFog.fill((0, 0, 0))
@@ -201,6 +209,22 @@ while True:
             cycles = 0
             player['x'], player['y'] = round(player['x']), round(player['y'])
             clear_fog(player)
+    else:
+        if moving == False:
+            current_tick = pygame.time.get_ticks()
+            if current_tick - last_frame_time > frame_duration:
+                if playerAnim in walkFront:
+                    idle = idleFront
+                elif playerAnim in walkBack:
+                    idle = idleBack
+                elif playerAnim in walkLeft:
+                    idle = idleLeft
+                elif playerAnim in walkRight:
+                    idle = idleRight
+                frame_index = (frame_index + 1) % len(idle)
+                last_frame_time = current_tick
+                playerAnim = idle[frame_index]
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
