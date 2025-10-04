@@ -182,6 +182,142 @@ def clear_fog(player):
                 continue
     return
 
+def update_map(game_map, player):
+    #Order of update, P > T > M > ?
+    #Adding Portal Stone Coordinates
+    game_map[player['portaly']][player['portalx']] = 'P'
+
+    #Adding Town Coordinates
+    game_map[0][0] = 'T'
+
+    #Adding Player Coordinates
+    game_map[player['y']][player['x']] = 'M'
+    return game_map
+
+def draw_view(game_map, player):
+    x = player['x']
+    y = player['y']
+
+    #Setting row based on viewport radius
+    row = {}
+    for i in range(player['torch']):
+        row[i + 1] = ''
+
+    #Update Map with T,M,P,?
+    updated_map = update_map(game_map, player)
+    
+    difference = math.floor(player['torch'] / 2)
+    for i in range(-difference, player['torch'] - difference):
+        for j in range(-difference, player['torch'] - difference):
+            try:
+                #Ensure index is positive as negative index will reference back of the list
+                assert y + i >= 0 and x + j >= 0
+
+                #Recording down the grids in the 3x3/5x5 radius
+                row[i + (1 + difference)] += updated_map[y + i][x + j]
+            except:
+                #Will draw # when out of index is negative or out of index (Wall Found)
+                row[i + (1 + difference)] += '#'
+    return row
+
+def movement(direction, view):
+    player['steps'] += 1
+    player['total_steps'] += 1
+
+    #Adjusting view based on viewport size
+    if player['torch'] == 5:
+        diff = 1
+    else:
+        diff = 0
+
+    if direction == 'w':
+        #Move Up
+        determine_grid_and_action(1 + diff, 1 + diff, view)
+
+    elif direction == 'a':
+        #Move Left
+        determine_grid_and_action(2 + diff, 0 + diff, view)
+
+    elif direction == 's':
+        #Move Down
+        determine_grid_and_action(3 + diff, 1 + diff, view)
+
+    else:
+        #Move Right
+        determine_grid_and_action(2 + diff, 2 + diff, view)
+
+    clear_fog(player)
+
+def determine_grid_and_action(row, col, view):
+    global moving, leftRight, upDown
+
+    #Row (dictionary) - 1, 2, 3
+    #Col (string format) - '012'
+    '''
+    (row, col)
+    +-----+-----+-----+     
+    | 1,0 | 1,1 | 1,2 |
+    +-----+-----+-----+
+    | 2,0 | 2,1 | 2,2 |
+    +-----+-----+-----+
+    | 3,0 | 3,1 | 3,2 |
+    +-----+-----+-----+
+    '''
+
+    difference = math.floor(player['torch'] / 2)
+    #Checks only the viewport and not the whole map when moving
+    if view[row][col] == '#':
+        print('You ran into the wall.')
+
+    elif view[row][col] == ' ' or view[row][col] == 'P':
+        #Move
+        game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
+        moving = True
+        determine_updownleftright(col - difference, row - difference - 1)
+
+    #elif view[row][col] == 'T':
+    #    game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
+    #    return_town() #Go back to 'T' goes back town
+
+    elif mineral_names[view[row][col]] not in minerals[0:player['pickaxe']]:
+        #Only can mine ores available for the pickaxe lvl
+        print(f'Your pickaxe is not good enough to mine {mineral_names[view[row][col]]}.')
+
+    else:
+        if calculate_load() != player['backpack']:
+            #Move
+            game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
+            moving = True
+            determine_updownleftright(col - difference, row - difference - 1)
+            game_map[player['y']][player['x']] = ' ' #Remove Ore Mined from gamemap
+
+            #Add Count to the desired ore and only adds up to max load
+            ore_count = randint(1, minerals_per_node_max[mineral_names[view[row][col]]])
+            adding = min(ore_count, player['backpack'] - calculate_load())
+            player[mineral_names[view[row][col]]] += adding
+            
+            print(f'You mined {ore_count} piece(s) of {mineral_names[view[row][col]]}')
+            #Message for overflow load
+            if adding != ore_count:
+                print(f'...but you can only carry {adding} more piece(s)!')
+
+        else:
+            print("You can't carry any more, so you can't go that way.")
+
+def calculate_load():
+    count = 0
+    count += player['copper']
+    count += player['silver']
+    count += player['gold']
+    return count
+
+def determine_updownleftright(x, y):
+    global upDown, leftRight
+    if x != 0:
+        leftRight = x
+    else:
+        upDown = y
+
 #-------------GAME----------------#
 initialize_game(game_map, player)
 #Player animation variables
@@ -236,18 +372,10 @@ while True:
             pygame.quit()
             exit()
         if event.type == pygame.KEYDOWN and moving == False:
-            if event.key == pygame.K_w:
-                moving = True
-                upDown = -1
-            elif event.key == pygame.K_a:
-                moving = True
-                leftRight = -1
-            elif event.key == pygame.K_s:
-                moving = True
-                upDown = 1
-            elif event.key == pygame.K_d:
-                moving = True
-                leftRight = 1
+            keyPressed = pygame.key.name(event.key)
+            if keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd':
+                view = draw_view(game_map, player)
+                movement(keyPressed, view)
 
     screen.fill((0, 0, 0))
     #Adding ground tile images
