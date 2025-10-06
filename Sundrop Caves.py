@@ -318,127 +318,325 @@ def determine_updownleftright(x, y):
     else:
         upDown = y
 
+def portal_stone(tired):
+    if tired == True:
+        print('You are exhausted.')
+    print('You place your portal stone here and zap back to town.')
+    game_map[player['portaly']][player['portalx']] = ' ' #Remove old portal stone from map
+    player['portalx'], player['portaly'] = player['x'], player['y'] #Set portal stone position
+    
+    return_town()
+
+def return_town():
+    global ore_price
+    global game_state
+    player['x'], player['y'] = 0, 0
+    player['day'] += 1
+    ore_price = set_ore_price()
+    deposit_ore()
+    game_state = 'town'
+
+def set_ore_price():
+    copper = randint(*prices['copper'])
+    silver = randint(*prices['silver'])
+    gold = randint(*prices['gold'])
+    return {'copper': copper, 'silver': silver, 'gold': gold}
+
+def sell_ore(copper, silver, gold):
+    print('\n------------------------------------------------------')
+    total_gp = 0
+    
+    if copper == True:
+        gp = (player['copper'] + player['warehouse'][2]) * ore_price['copper']
+        total_gp += gp
+        print(f'You sell {player['copper'] + player['warehouse'][2]} copper ore for {gp} GP.')
+        player['copper'], player['warehouse'][2] = 0, 0
+
+    if silver == True:
+        gp = (player['silver'] + player['warehouse'][1]) * ore_price['silver']
+        total_gp += gp
+        print(f'You sell {player['silver'] + player['warehouse'][1]} silver ore for {gp} GP.') 
+        player['silver'], player['warehouse'][1] = 0, 0
+
+    if gold == True:
+        gp = (player['gold'] + player['warehouse'][0]) * ore_price['gold']
+        total_gp += gp
+        print(f'You sell {player['gold'] + player['warehouse'][0]} gold ore for {gp} GP.')
+        player['gold'], player['warehouse'][0] = 0, 0
+
+    if total_gp != 0:
+        player['GP'] += total_gp
+        print(f'You now have {player['GP']} GP!')
+        deposit_ore()
+
+def deposit_ore():
+    priority = ['gold', 'silver', 'copper']
+    store_amount = 0
+    for ores in priority:
+        if WAREHOUSE_SIZE - sum(player['warehouse']) <= 0:
+            break
+        store_amount = min(player[ores], WAREHOUSE_SIZE - sum(player['warehouse']))
+        player[ores] -= store_amount
+        player['warehouse'][priority.index(ores)] += store_amount
+    if store_amount > 0:
+        print('You deposited your ores in the warehouse.')
+
 #-------------GAME----------------#
-initialize_game(game_map, player)
+game_state = 'main'
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
 
 while True:
-    if moving == True:
-        cycles += 1
-        if upDown != 0:
-            player['y'] += upDown * 0.05
-            if upDown == 1:
-                if cycles % 4 == 0 and cycles != 0:
-                    playerAnim = walkFront[int((cycles / 4) - 1)] 
-            else:
-                if cycles % 4 == 0 and cycles != 0:
-                    playerAnim = walkBack[int((cycles / 4) - 1)]       
-        else:
-            player['x'] += leftRight * 0.05
-            if leftRight == 1:
-                if cycles % 4 == 0 and cycles != 0:
-                    playerAnim = walkRight[int((cycles / 4) - 1)] 
-            else:
-                if cycles % 4 == 0 and cycles != 0:
-                    playerAnim = walkLeft[int((cycles / 4) - 1)]  
-        
-        if cycles == 20:
-            moving = False
-            upDown = 0
-            leftRight = 0
-            cycles = 0
-            player['x'], player['y'] = round(player['x']), round(player['y'])
-            clear_fog(player)
-    else:
-        if moving == False:
-            current_tick = pygame.time.get_ticks()
-            if current_tick - last_frame_time > frame_duration:
-                if playerAnim in walkFront:
-                    idle = idleFront
-                elif playerAnim in walkBack:
-                    idle = idleBack
-                elif playerAnim in walkLeft:
-                    idle = idleLeft
-                elif playerAnim in walkRight:
-                    idle = idleRight
-                frame_index = (frame_index + 1) % len(idle)
-                last_frame_time = current_tick
-                playerAnim = idle[frame_index]
-
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-        if event.type == pygame.KEYDOWN and moving == False:
+        if event.type == pygame.KEYDOWN and moving == False and game_state == 'mine':
             keyPressed = pygame.key.name(event.key)
             if keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd':
                 view = draw_view(game_map, player)
                 movement(keyPressed, view)
 
     screen.fill((0, 0, 0))
-    #Adding ground tile images
-    for i in range(MAP_HEIGHT):
-        for j in range(MAP_WIDTH):
-            if i == 0:
-                if j == 0:
-                    selectedTile = topLeft
-                elif j == MAP_WIDTH - 1:
-                    selectedTile = topRight
+
+    if game_state == 'main':
+        show_main_menu()
+        choice = input('Your Choice? ').lower()
+
+    if choice == 'n' or game_state == 'town':
+        if game_state == 'main':
+            #New Game
+            initialize_game(game_map, player)
+            player['name'] = get_name()
+            
+        game_state = 'town'
+        ore_price = set_ore_price()
+
+    elif choice == 'l':
+        #Load Game
+        try:
+            with open('savefile.json', 'r') as textfile:
+                if len(textfile.readlines()) == 0:
+                    print('No save data found.')
                 else:
-                    selectedTile = topMid
-            elif i == MAP_HEIGHT - 1:
-                if j == 0:
-                    selectedTile = botLeft
-                elif j == MAP_WIDTH - 1:
-                    selectedTile = botRight
+                    game_map, fog, player = load_game('savefile.json')
+                    game_state = 'town'
+                    print('Game loaded.')
+        except:
+            print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
+    
+    elif choice == 'h':
+        try:
+            load_highscores('highscores.txt')
+        except:
+            print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+
+    elif choice == 'q':
+        #Quit
+        print('Thanks for playing!')
+        break
+
+    if game_state == 'town':
+        show_town_menu()
+        move = input('Your choice? ').lower()
+        if move == 'b':
+            #Shop
+            while True:
+                show_shop()
+                option = input('Your choice? ').lower()
+                if option == 'p' and player['pickaxe'] != 3:
+                    #Upgrade Pickaxe
+                    if player['GP'] >= pickaxe_price[player['pickaxe'] - 1]:
+                        player['GP'] -= pickaxe_price[player['pickaxe'] - 1]
+                        player['pickaxe'] += 1
+                        print(f'Congratulations! You can now mine {minerals[player['pickaxe'] - 1]}!')
+                    else:
+                        print('You do not have enough GP!')
+
+                elif option == 'b':
+                    #Upgrade Backpack
+                    if player['GP'] >= player['backpack'] * 2:
+                        player['GP'] -= player['backpack'] * 2
+                        player['backpack'] += 2
+                        print(f'Congratulations! You can now carry {player['backpack']} items!')
+                    else:
+                        print('You do not have enough GP!')
+
+                elif option == 'm' and player['torch'] == 3:
+                    #Buy magic torch
+                    if player['GP'] >= 50:
+                        player['GP'] -= 50
+                        player['torch'] = 5
+                        print(f'Congratulations! You can now view in a 5x5 radius!')
+                    else:
+                        print('You do not have enough GP!')
+
+                elif option == 'l':
+                    print('Bye! See you again!')
+                    #Leave
+                    break
+
+        elif move == 's':
+            #Sell Ores
+            while True:
+                show_sell_menu()
+                sell = input('Your choice? ').lower()
+                if sell == 'c' and (player['copper'] + player['warehouse'][2]) != 0:
+                    sell_ore(True, False, False)
+
+                elif sell == 's' and (player['silver'] + player['warehouse'][1]) != 0:
+                    sell_ore(False, True, False)
+
+                elif sell == 'g' and (player['gold'] + player['warehouse'][0]) != 0:
+                    sell_ore(False, False, True)
+
+                elif sell == 'l':
+                    print('Bye, See you again! New ore prices daily!')
+                    break
+
                 else:
-                    selectedTile = botMid
-            elif j == 0:
-                selectedTile = midLeft
-            elif j == MAP_WIDTH - 1:
-                selectedTile = midRight
+                    #Input Validation
+                    print('Please enter a valid choice!')
+                
+                if player['GP'] >= WIN_GP:
+                    game_state = game_end('highscores.txt')
+                    break
+
+        elif move == 'i':
+            #Display Player Information
+            show_information(player)
+
+        elif move == 'm':
+            #View Map
+            draw_map(game_map, fog, player)
+
+        elif move == 'e':
+            player['steps'] = 0
+            player['x'], player['y'] = player['portalx'], player['portaly'] #Teleport to portal stone
+            clear_fog(player)
+
+            #Enter Mine
+            game_state = 'mine'
+            print_day()
+
+        elif move == 'v':
+            #Save Game
+            try:
+                save_data = save_game(game_map, fog, player, 'savefile.json')
+                print('Game Saved.')
+            except:
+                print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
+
+        elif move == 'q':
+            #Back to main menu
+            game_state = 'main'
+            break
+
+    #Mine Code
+    if game_state == 'mine':
+        if moving == True:
+            cycles += 1
+            if upDown != 0:
+                player['y'] += upDown * 0.05
+                if upDown == 1:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = walkFront[int((cycles / 4) - 1)] 
+                else:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = walkBack[int((cycles / 4) - 1)]       
             else:
-                selectedTile = mid
-
-            tileX = MID_SCREENX + ((j - player['x']) * TILE_SIZE[0])
-            tileY = MID_SCREENY + ((i - player['y']) * TILE_SIZE[1])
-
-            #Will not blit those out of screen
-            if tileX < 0 - TILE_SIZE[0] or tileX > SCREEN_SIZE[0] + TILE_SIZE[0] or tileY < 0 - TILE_SIZE[1] or tileY > SCREEN_SIZE[1] + TILE_SIZE[1]:
-                continue
-
-            position = (round(tileX), round(tileY))
-            screen.blit(selectedTile, position)
-
-            #blit ores
-            if game_map[i][j] == 'C':
-                screen.blit(copperOre, position)
-            elif game_map[i][j] == 'S':
-                screen.blit(silverOre, position)
-            elif game_map[i][j] == 'G':
-                screen.blit(goldOre, position)
-
-            #blit fog
-            
-            vision = math.floor(player['torch'] / 2)
-            if fog[i][j] == '?':
-                screen.blit(selectedTile, position) #remove any ores not discovered
-                screen.blit(fullFog, position)
-            elif abs(i - player['y']) > vision or abs(j - player['x']) > vision:
-                screen.blit(halfFog, position)
-
-            if i == 0:
-                if j % 3 == 0:
-                    wallTile = wall[2]
-                elif j % 2 == 0:
-                    wallTile = wall[1]
+                player['x'] += leftRight * 0.05
+                if leftRight == 1:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = walkRight[int((cycles / 4) - 1)] 
                 else:
-                    wallTile = wall[0]
-                screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
-
-    screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = walkLeft[int((cycles / 4) - 1)]  
             
+            if cycles == 20:
+                moving = False
+                upDown = 0
+                leftRight = 0
+                cycles = 0
+                player['x'], player['y'] = round(player['x']), round(player['y'])
+                clear_fog(player)
+        else:
+            if moving == False:
+                current_tick = pygame.time.get_ticks()
+                if current_tick - last_frame_time > frame_duration:
+                    if playerAnim in walkFront:
+                        idle = idleFront
+                    elif playerAnim in walkBack:
+                        idle = idleBack
+                    elif playerAnim in walkLeft:
+                        idle = idleLeft
+                    elif playerAnim in walkRight:
+                        idle = idleRight
+                    frame_index = (frame_index + 1) % len(idle)
+                    last_frame_time = current_tick
+                    playerAnim = idle[frame_index]
+
+        #Adding ground tile images
+        for i in range(MAP_HEIGHT):
+            for j in range(MAP_WIDTH):
+                if i == 0:
+                    if j == 0:
+                        selectedTile = topLeft
+                    elif j == MAP_WIDTH - 1:
+                        selectedTile = topRight
+                    else:
+                        selectedTile = topMid
+                elif i == MAP_HEIGHT - 1:
+                    if j == 0:
+                        selectedTile = botLeft
+                    elif j == MAP_WIDTH - 1:
+                        selectedTile = botRight
+                    else:
+                        selectedTile = botMid
+                elif j == 0:
+                    selectedTile = midLeft
+                elif j == MAP_WIDTH - 1:
+                    selectedTile = midRight
+                else:
+                    selectedTile = mid
+
+                tileX = MID_SCREENX + ((j - player['x']) * TILE_SIZE[0])
+                tileY = MID_SCREENY + ((i - player['y']) * TILE_SIZE[1])
+
+                #Will not blit those out of screen
+                if tileX < 0 - TILE_SIZE[0] or tileX > SCREEN_SIZE[0] + TILE_SIZE[0] or tileY < 0 - TILE_SIZE[1] or tileY > SCREEN_SIZE[1] + TILE_SIZE[1]:
+                    continue
+
+                position = (round(tileX), round(tileY))
+                screen.blit(selectedTile, position)
+
+                #blit ores
+                if game_map[i][j] == 'C':
+                    screen.blit(copperOre, position)
+                elif game_map[i][j] == 'S':
+                    screen.blit(silverOre, position)
+                elif game_map[i][j] == 'G':
+                    screen.blit(goldOre, position)
+
+                #blit fog
+                
+                vision = math.floor(player['torch'] / 2)
+                if fog[i][j] == '?':
+                    screen.blit(selectedTile, position) #remove any ores not discovered
+                    screen.blit(fullFog, position)
+                elif abs(i - player['y']) > vision or abs(j - player['x']) > vision:
+                    screen.blit(halfFog, position)
+
+                if i == 0:
+                    if j % 3 == 0:
+                        wallTile = wall[2]
+                    elif j % 2 == 0:
+                        wallTile = wall[1]
+                    else:
+                        wallTile = wall[0]
+                    screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
+
+        screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
+                   
     pygame.display.update()
     clock.tick(60)
