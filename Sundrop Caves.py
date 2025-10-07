@@ -79,7 +79,6 @@ halfFog.set_alpha(100)
 player = {}
 game_map = []
 fog = []
-save_data = {}
 
 MAP_WIDTH = 0
 MAP_HEIGHT = 0
@@ -154,7 +153,7 @@ def initialize_game(game_map, player):
     player['pickaxe'] = 1
     player['backpack'] = 10
     player['warehouse'] = [0, 0 ,0]
-    player['name'] = ''
+    player['name'] = 'Player'
     player['portalx'] = 0
     player['portaly'] = 0
     player['torch'] = 3
@@ -221,9 +220,6 @@ def draw_view(game_map, player):
     return row
 
 def movement(direction, view):
-    player['steps'] += 1
-    player['total_steps'] += 1
-
     #Adjusting view based on viewport size
     if player['torch'] == 5:
         diff = 1
@@ -381,134 +377,251 @@ def deposit_ore():
     if store_amount > 0:
         print('You deposited your ores in the warehouse.')
 
+def show_main_menu():
+    print()
+    print("--- Main Menu ----")
+    print("(N)ew game")
+    print("(L)oad saved game")
+    print("(H)igh scores")
+    print("(Q)uit")
+    print("------------------")
+
+def show_town_menu():
+    print()
+    # TODO: Show Day
+    print(f'DAY {player['day']}')
+    print("----- Sundrop Town -----")
+    print("(B)uy stuff")
+    print("(S)ell ores")
+    print("See Player (I)nformation")
+    print("See Mine (M)ap")
+    print("(E)nter mine")
+    print("Sa(V)e game")
+    print("(Q)uit to main menu")
+    print("------------------------")
+
+def show_shop():
+    print()
+    print('----------------------- Shop Menu -------------------------')
+    if player['pickaxe'] != 3:
+        print(f'(P)ickaxe upgrade to Level {player['pickaxe'] + 1} to mine {minerals[player['pickaxe']]} ore for {pickaxe_price[player['pickaxe'] - 1]} GP')
+    print(f'(B)ackpack upgrade to carry {player['backpack'] + 2} items for {player['backpack'] * 2} GP')
+    if player['torch'] == 3:
+        print('(M)agic torch to view a 5x5 radius in the mines for 50 GP')
+    print('(L)eave shop')
+    print('-----------------------------------------------------------')
+    print(f'GP: {player['GP']}')
+    print('-----------------------------------------------------------')
+
+def show_information(player):
+    print()
+    print('----- Player Information -----')
+    print(f'Name: {player['name']}')
+
+    #Show Current position or portal position based on game state
+    if game_state == 'mine':
+        print(f'Current position: ({player['x']}, {player['y']})')
+    else:
+        print(f'Portal position: ({player['portalx']}, {player['portaly']})')
+    
+    print(f'Pickaxe level: {player['pickaxe']} ({minerals[player['pickaxe'] - 1]})')
+
+    #Show ores if carrying ores
+    if calculate_load() != 0:
+        print(f'Gold: {player['gold']}')
+        print(f'Silver: {player['silver']}')
+        print(f'Copper: {player['copper']}')
+    
+    print('------------------------------')
+    print(f'Load: {calculate_load()} / {player['backpack']}  Warehouse: {sum(player['warehouse'])} / {WAREHOUSE_SIZE}')
+    print('------------------------------')
+    print(f'GP: {player['GP']}')
+    print(f'Steps taken: {player['total_steps']}')
+    print('------------------------------')
+
+def show_sell_menu():
+    print()
+    print("------ Ore Prices ------")
+    print(f'Copper: {ore_price['copper']} GP')
+    print(f'Silver: {ore_price['silver']} GP')
+    print(f'Gold: {ore_price['gold']} GP')
+    print("------ Inventory -------")
+    print(f'Copper: {player['copper'] + player['warehouse'][2]}')
+    print(f'Silver: {player['silver'] + player['warehouse'][1]}')
+    print(f'Gold: {player['gold'] + player['warehouse'][0]}')
+    print("------------------------")
+    if player['copper'] + player['warehouse'][2] != 0:
+        print('Sell (C)opper')
+    if player['silver'] + player['warehouse'][1] != 0:
+        print('Sell (S)ilver')
+    if player['gold'] + player['warehouse'][0] != 0:
+        print('Sell (G)old')
+    print('(L)eave')
+    print("------------------------")
+
+# This function saves the game
+def save_game(game_map, fog, player, savefile):
+    save_data = {}
+
+    # save map
+    save_data['game_map'] = deepcopy(game_map)
+    # save fog
+    save_data['fog'] = deepcopy(fog)
+    # save player
+    save_data['player'] = deepcopy(player)
+    #Write into textfile
+    try:
+        with open(savefile, 'w') as textfile:
+            json.dump(save_data, textfile)
+    except:
+        raise FileNotFoundError
+        
+# This function loads the game
+def load_game(savefile):
+    #Convert textfile into a list
+    with open(savefile, 'r') as textfile:
+        save_data = json.load(textfile)
+
+        # load map
+        game_map = save_data['game_map']
+        # load fog
+        fog = save_data['fog']
+        # load player
+        player = save_data['player']
+
+        global MAP_WIDTH
+        global MAP_HEIGHT
+        MAP_WIDTH = player['MAP_WIDTH']
+        MAP_HEIGHT = player['MAP_HEIGHT']
+        return game_map, fog, player
+    
+def load_highscores(highscore_file):
+    try:
+        with open(highscore_file, 'r') as textfile:
+            print()
+            print('-------------- High Scores --------------')
+            if len(textfile.readlines()) == 0:
+                print('               (No Record)               ')
+            else:
+                #Add data into list
+                scores = []
+                textfile.seek(0) #Move pointer to start
+                for line in textfile:
+                    #Days, Name, GP, Steps (List form)
+                    scores.append(line.strip().split(','))
+
+                #Arrange in order of top
+                scores.sort(key=lambda x: (int(x[0]), int(x[3]), -int(x[2])))
+
+                #Delete the rest not top 5
+                if len(scores) > 5:
+                    scores.pop(-1)
+                    with open(highscore_file, 'w') as file:
+                        for item in scores:
+                            file.write(item[0] + ',' + item[1] + ',' + item[2] + ',' + item[3] + '\n')
+
+                #Print
+                count = 1
+                for item in scores:
+                    print(f'{count}. {item[1]}: {item[0]} Days, {item[3]} Steps, {item[2]} GP.')
+                    count += 1
+            print('-----------------------------------------')
+    except:
+        raise FileNotFoundError
+
+def game_end(highscore_file):
+    print('-------------------------------------------------------------')
+    print(f'Woo-hoo! Well done, {player['name']}, you have {player['GP']} GP!')
+    print('You now have enough to retire and play video games every day.')
+    print(f'And it only took you {player['day']} days and {player['total_steps']} steps! You win!')
+    print('-------------------------------------------------------------')
+    try:
+        with open(highscore_file, 'a') as textfile:
+            textfile.write(str(player['day']) + ',' + player['name'] + ',' + str(player['GP']) + ',' + str(player['total_steps']) + '\n')
+    except:
+        print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+        print('Your score was not recorded.')
+    return 'main'
+
 #-------------GAME----------------#
 game_state = 'main'
+action = choice = move = option = sell = ''
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
 
 while True:
+    screen.fill((0, 0, 0))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-        if event.type == pygame.KEYDOWN and moving == False and game_state == 'mine':
+        if event.type == pygame.KEYDOWN:
             keyPressed = pygame.key.name(event.key)
-            if keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd':
-                view = draw_view(game_map, player)
-                movement(keyPressed, view)
-
-    screen.fill((0, 0, 0))
+            if (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd') and game_state == 'mine':
+                action = keyPressed
+            elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
+                choice = keyPressed
+            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'm' or keyPressed == 'e' or keyPressed == 'iv' or keyPressed == 'q') and game_state == 'town':
+                move = keyPressed
+            elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
+                option = keyPressed
+            elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
+                sell = keyPressed
 
     if game_state == 'main':
-        show_main_menu()
-        choice = input('Your Choice? ').lower()
+        #show_main_menu()
+        if choice == 'n' or game_state == 'town':
+            if game_state == 'main':
+                #New Game
+                initialize_game(game_map, player)
+                #player['name'] = get_name()
+                
+            game_state = 'town'
+            ore_price = set_ore_price()
 
-    if choice == 'n' or game_state == 'town':
-        if game_state == 'main':
-            #New Game
-            initialize_game(game_map, player)
-            player['name'] = get_name()
-            
-        game_state = 'town'
-        ore_price = set_ore_price()
+        elif choice == 'l':
+            #Load Game
+            try:
+                with open('savefile.json', 'r') as textfile:
+                    if len(textfile.readlines()) == 0:
+                        print('No save data found.')
+                    else:
+                        game_map, fog, player = load_game('savefile.json')
+                        game_state = 'town'
+                        print('Game loaded.')
+            except:
+                print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
+        
+        elif choice == 'h':
+            try:
+                load_highscores('highscores.txt')
+            except:
+                print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
 
-    elif choice == 'l':
-        #Load Game
-        try:
-            with open('savefile.json', 'r') as textfile:
-                if len(textfile.readlines()) == 0:
-                    print('No save data found.')
-                else:
-                    game_map, fog, player = load_game('savefile.json')
-                    game_state = 'town'
-                    print('Game loaded.')
-        except:
-            print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
-    
-    elif choice == 'h':
-        try:
-            load_highscores('highscores.txt')
-        except:
-            print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+        elif choice == 'q':
+            #Quit
+            print('Thanks for playing!')
+            pygame.quit()
+            exit()
 
-    elif choice == 'q':
-        #Quit
-        print('Thanks for playing!')
-        break
+        choice = ''
 
     if game_state == 'town':
-        show_town_menu()
-        move = input('Your choice? ').lower()
+        #show_town_menu()
         if move == 'b':
-            #Shop
-            while True:
-                show_shop()
-                option = input('Your choice? ').lower()
-                if option == 'p' and player['pickaxe'] != 3:
-                    #Upgrade Pickaxe
-                    if player['GP'] >= pickaxe_price[player['pickaxe'] - 1]:
-                        player['GP'] -= pickaxe_price[player['pickaxe'] - 1]
-                        player['pickaxe'] += 1
-                        print(f'Congratulations! You can now mine {minerals[player['pickaxe'] - 1]}!')
-                    else:
-                        print('You do not have enough GP!')
-
-                elif option == 'b':
-                    #Upgrade Backpack
-                    if player['GP'] >= player['backpack'] * 2:
-                        player['GP'] -= player['backpack'] * 2
-                        player['backpack'] += 2
-                        print(f'Congratulations! You can now carry {player['backpack']} items!')
-                    else:
-                        print('You do not have enough GP!')
-
-                elif option == 'm' and player['torch'] == 3:
-                    #Buy magic torch
-                    if player['GP'] >= 50:
-                        player['GP'] -= 50
-                        player['torch'] = 5
-                        print(f'Congratulations! You can now view in a 5x5 radius!')
-                    else:
-                        print('You do not have enough GP!')
-
-                elif option == 'l':
-                    print('Bye! See you again!')
-                    #Leave
-                    break
+            game_state = 'shop'
 
         elif move == 's':
-            #Sell Ores
-            while True:
-                show_sell_menu()
-                sell = input('Your choice? ').lower()
-                if sell == 'c' and (player['copper'] + player['warehouse'][2]) != 0:
-                    sell_ore(True, False, False)
-
-                elif sell == 's' and (player['silver'] + player['warehouse'][1]) != 0:
-                    sell_ore(False, True, False)
-
-                elif sell == 'g' and (player['gold'] + player['warehouse'][0]) != 0:
-                    sell_ore(False, False, True)
-
-                elif sell == 'l':
-                    print('Bye, See you again! New ore prices daily!')
-                    break
-
-                else:
-                    #Input Validation
-                    print('Please enter a valid choice!')
-                
-                if player['GP'] >= WIN_GP:
-                    game_state = game_end('highscores.txt')
-                    break
+            game_state = 'sell'
 
         elif move == 'i':
             #Display Player Information
             show_information(player)
 
-        elif move == 'm':
+        #elif move == 'm':
             #View Map
-            draw_map(game_map, fog, player)
+            #draw_map(game_map, fog, player)
 
         elif move == 'e':
             player['steps'] = 0
@@ -517,7 +630,6 @@ while True:
 
             #Enter Mine
             game_state = 'mine'
-            print_day()
 
         elif move == 'v':
             #Save Game
@@ -530,10 +642,96 @@ while True:
         elif move == 'q':
             #Back to main menu
             game_state = 'main'
-            break
+
+        move = ''
+
+    #Shop
+    if game_state == 'shop':
+        #show_shop()
+        if option == 'p' and player['pickaxe'] != 3:
+            #Upgrade Pickaxe
+            if player['GP'] >= pickaxe_price[player['pickaxe'] - 1]:
+                player['GP'] -= pickaxe_price[player['pickaxe'] - 1]
+                player['pickaxe'] += 1
+                print(f'Congratulations! You can now mine {minerals[player['pickaxe'] - 1]}!')
+            else:
+                print('You do not have enough GP!')
+
+        elif option == 'b':
+            #Upgrade Backpack
+            if player['GP'] >= player['backpack'] * 2:
+                player['GP'] -= player['backpack'] * 2
+                player['backpack'] += 2
+                print(f'Congratulations! You can now carry {player['backpack']} items!')
+            else:
+                print('You do not have enough GP!')
+
+        elif option == 'm' and player['torch'] == 3:
+            #Buy magic torch
+            if player['GP'] >= 50:
+                player['GP'] -= 50
+                player['torch'] = 5
+                print(f'Congratulations! You can now view in a 5x5 radius!')
+            else:
+                print('You do not have enough GP!')
+
+        elif option == 'l':
+            print('Bye! See you again!')
+            #Leave
+            game_state = 'town'
+
+        option = ''
+
+    #Sell Ores
+    if game_state == 'sell':
+        #show_sell_menu()
+        if sell == 'c' and (player['copper'] + player['warehouse'][2]) != 0:
+            sell_ore(True, False, False)
+
+        elif sell == 's' and (player['silver'] + player['warehouse'][1]) != 0:
+            sell_ore(False, True, False)
+
+        elif sell == 'g' and (player['gold'] + player['warehouse'][0]) != 0:
+            sell_ore(False, False, True)
+
+        elif sell == 'l':
+            print('Bye, See you again! New ore prices daily!')
+            game_state = 'town'
+        
+        if player['GP'] >= WIN_GP:
+            game_state = game_end('highscores.txt')
+        
+        sell = ''
 
     #Mine Code
     if game_state == 'mine':
+        #show_mine_menu()
+        if moving == False:
+            if action == 'w' or action == 'a' or action == 's' or action == 'd':
+                view = draw_view(game_map, player)
+                movement(action, view)
+                if player['steps'] == player['turns']:
+                    portal_stone(True)
+
+            #elif action == 'm':
+                #View Map
+                #draw_map(game_map, fog, player)
+
+            elif action == 'i':
+                #View Information
+                show_information(player)
+
+            elif action == 'p':
+                #Use Portal Stone
+                portal_stone(False)
+
+            elif action == 'q':
+                #Quit to main menu
+                game_state = 'main'
+
+        action = ''
+
+        #Animations
         if moving == True:
             cycles += 1
             if upDown != 0:
@@ -560,21 +758,22 @@ while True:
                 cycles = 0
                 player['x'], player['y'] = round(player['x']), round(player['y'])
                 clear_fog(player)
+                player['steps'] += 1
+                player['total_steps'] += 1
         else:
-            if moving == False:
-                current_tick = pygame.time.get_ticks()
-                if current_tick - last_frame_time > frame_duration:
-                    if playerAnim in walkFront:
-                        idle = idleFront
-                    elif playerAnim in walkBack:
-                        idle = idleBack
-                    elif playerAnim in walkLeft:
-                        idle = idleLeft
-                    elif playerAnim in walkRight:
-                        idle = idleRight
-                    frame_index = (frame_index + 1) % len(idle)
-                    last_frame_time = current_tick
-                    playerAnim = idle[frame_index]
+            current_tick = pygame.time.get_ticks()
+            if current_tick - last_frame_time > frame_duration:
+                if playerAnim in walkFront:
+                    idle = idleFront
+                elif playerAnim in walkBack:
+                    idle = idleBack
+                elif playerAnim in walkLeft:
+                    idle = idleLeft
+                elif playerAnim in walkRight:
+                    idle = idleRight
+                frame_index = (frame_index + 1) % len(idle)
+                last_frame_time = current_tick
+                playerAnim = idle[frame_index]
 
         #Adding ground tile images
         for i in range(MAP_HEIGHT):
@@ -619,7 +818,6 @@ while True:
                     screen.blit(goldOre, position)
 
                 #blit fog
-                
                 vision = math.floor(player['torch'] / 2)
                 if fog[i][j] == '?':
                     screen.blit(selectedTile, position) #remove any ores not discovered
