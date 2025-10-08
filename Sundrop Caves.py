@@ -17,9 +17,15 @@ clock = pygame.time.Clock()
 
 last_frame_time = 0
 frame_duration = 300
+frame_duration_town = 10000
 frame_index = 0
 
 game_font = pygame.font.Font(None, 50)
+cave_background = pygame.transform.scale(pygame.image.load('Cave.png').convert_alpha(), SCREEN_SIZE)
+town_background = pygame.image.load('Town.png').convert_alpha() #2048 : 1440
+changeX = changeY = 0
+townX, townY = -400, -200
+shop_background = pygame.transform.scale(pygame.image.load('Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.5,SCREEN_SIZE[1] * 1.5))
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -381,6 +387,7 @@ def deposit_ore():
 
 def show_main_menu(state):
     global screen
+    screen.blit(cave_background, (0,0))
     score_surface = game_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
@@ -394,7 +401,19 @@ def show_main_menu(state):
     '''
 
 def show_town_menu(state):
-    global screen
+    global screen, townX, townY, current_tick, last_frame_time, frame_duration_town, changeX, changeY
+    screen.blit(town_background, (townX,townY))
+    current_tick = pygame.time.get_ticks()
+    if current_tick - last_frame_time > frame_duration_town:
+        changeX, changeY= randint(-1, 1)/2, randint(-1, 1)/2
+        last_frame_time = current_tick
+    townX += changeX
+    townY += changeY
+    if townX < -2048 or townX > 0:
+        townX -= changeX
+    if townY < -1440 or townY > 0:
+        townY -= changeY
+
     score_surface = game_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
@@ -414,6 +433,7 @@ def show_town_menu(state):
 
 def show_shop(state):
     global screen
+    screen.blit(shop_background, (0,0))
     score_surface = game_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
@@ -458,6 +478,7 @@ def show_information(player):
 
 def show_sell_menu(state):
     global screen
+    screen.blit(shop_background, (0,0))
     score_surface = game_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
