@@ -19,6 +19,8 @@ last_frame_time = 0
 frame_duration = 300
 frame_index = 0
 
+game_font = pygame.font.Font(None, 50)
+
 #Extract tiles from tilemap
 tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
 TILE_WIDTH = 16
@@ -377,18 +379,27 @@ def deposit_ore():
     if store_amount > 0:
         print('You deposited your ores in the warehouse.')
 
-def show_main_menu():
-    print()
+def show_main_menu(state):
+    global screen
+    score_surface = game_font.render(state, True, 'Green')
+    score_rect = score_surface.get_rect(center = (400,50))
+    screen.blit(score_surface, score_rect)
+    '''
     print("--- Main Menu ----")
     print("(N)ew game")
     print("(L)oad saved game")
     print("(H)igh scores")
     print("(Q)uit")
     print("------------------")
+    '''
 
-def show_town_menu():
-    print()
+def show_town_menu(state):
+    global screen
+    score_surface = game_font.render(state, True, 'Green')
+    score_rect = score_surface.get_rect(center = (400,50))
+    screen.blit(score_surface, score_rect)
     # TODO: Show Day
+    '''
     print(f'DAY {player['day']}')
     print("----- Sundrop Town -----")
     print("(B)uy stuff")
@@ -399,9 +410,14 @@ def show_town_menu():
     print("Sa(V)e game")
     print("(Q)uit to main menu")
     print("------------------------")
+    '''
 
-def show_shop():
-    print()
+def show_shop(state):
+    global screen
+    score_surface = game_font.render(state, True, 'Green')
+    score_rect = score_surface.get_rect(center = (400,50))
+    screen.blit(score_surface, score_rect)
+    '''
     print('----------------------- Shop Menu -------------------------')
     if player['pickaxe'] != 3:
         print(f'(P)ickaxe upgrade to Level {player['pickaxe'] + 1} to mine {minerals[player['pickaxe']]} ore for {pickaxe_price[player['pickaxe'] - 1]} GP')
@@ -412,6 +428,7 @@ def show_shop():
     print('-----------------------------------------------------------')
     print(f'GP: {player['GP']}')
     print('-----------------------------------------------------------')
+    '''
 
 def show_information(player):
     print()
@@ -439,8 +456,12 @@ def show_information(player):
     print(f'Steps taken: {player['total_steps']}')
     print('------------------------------')
 
-def show_sell_menu():
-    print()
+def show_sell_menu(state):
+    global screen
+    score_surface = game_font.render(state, True, 'Green')
+    score_rect = score_surface.get_rect(center = (400,50))
+    screen.blit(score_surface, score_rect)
+    '''
     print("------ Ore Prices ------")
     print(f'Copper: {ore_price['copper']} GP')
     print(f'Silver: {ore_price['silver']} GP')
@@ -458,6 +479,7 @@ def show_sell_menu():
         print('Sell (G)old')
     print('(L)eave')
     print("------------------------")
+    '''
 
 # This function saves the game
 def save_game(game_map, fog, player, savefile):
@@ -558,11 +580,11 @@ while True:
             exit()
         if event.type == pygame.KEYDOWN:
             keyPressed = pygame.key.name(event.key)
-            if (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd') and game_state == 'mine':
+            if (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine':
                 action = keyPressed
             elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
                 choice = keyPressed
-            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'm' or keyPressed == 'e' or keyPressed == 'iv' or keyPressed == 'q') and game_state == 'town':
+            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'm' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
                 move = keyPressed
             elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
                 option = keyPressed
@@ -570,7 +592,7 @@ while True:
                 sell = keyPressed
 
     if game_state == 'main':
-        #show_main_menu()
+        show_main_menu(game_state)
         if choice == 'n' or game_state == 'town':
             if game_state == 'main':
                 #New Game
@@ -608,7 +630,7 @@ while True:
         choice = ''
 
     if game_state == 'town':
-        #show_town_menu()
+        show_town_menu(game_state)
         if move == 'b':
             game_state = 'shop'
 
@@ -647,7 +669,7 @@ while True:
 
     #Shop
     if game_state == 'shop':
-        #show_shop()
+        show_shop(game_state)
         if option == 'p' and player['pickaxe'] != 3:
             #Upgrade Pickaxe
             if player['GP'] >= pickaxe_price[player['pickaxe'] - 1]:
@@ -684,7 +706,7 @@ while True:
 
     #Sell Ores
     if game_state == 'sell':
-        #show_sell_menu()
+        show_sell_menu(game_state)
         if sell == 'c' and (player['copper'] + player['warehouse'][2]) != 0:
             sell_ore(True, False, False)
 
