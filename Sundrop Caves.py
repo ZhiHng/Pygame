@@ -898,6 +898,5 @@ while True:
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
                    
     screen.blit(paper, paper_rect)
-    screen.blit(paperButton, paperButton_rect)
     pygame.display.update()
     clock.tick(60)
