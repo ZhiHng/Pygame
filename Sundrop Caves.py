@@ -26,6 +26,8 @@ town_background = pygame.image.load('Town.png').convert_alpha() #2048 : 1440
 changeX = changeY = 0
 townX, townY = -400, -200
 shop_background = pygame.transform.scale(pygame.image.load('Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.5,SCREEN_SIZE[1] * 1.5))
+board = pygame.image.load('Board.jpg').convert_alpha()
+board.set_colorkey((255, 255, 255))  # Make pure white transparent
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -405,7 +407,13 @@ def show_town_menu(state):
     screen.blit(town_background, (townX,townY))
     current_tick = pygame.time.get_ticks()
     if current_tick - last_frame_time > frame_duration_town:
-        changeX, changeY= randint(-1, 1)/2, randint(-1, 1)/2
+        newX, newY = randint(-1, 1)/2, randint(-1, 1)/2
+        while newX == changeX or newY == changeY:
+            if newX == changeX:
+                newX = randint(-1, 1)/2
+            if newY == changeY:
+                newY = randint(-1, 1)/2
+        changeX, changeY = newX, newY
         last_frame_time = current_tick
     townX += changeX
     townY += changeY
@@ -879,5 +887,6 @@ while True:
 
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
                    
+    screen.blit(board, (600,300))
     pygame.display.update()
     clock.tick(60)
