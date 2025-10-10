@@ -21,16 +21,26 @@ frame_duration_town = 10000
 frame_index = 0
 
 game_font = pygame.font.Font(None, 50)
-cave_background = pygame.transform.scale(pygame.image.load('Cave.png').convert_alpha(), SCREEN_SIZE)
-town_background = pygame.image.load('Town.png').convert_alpha() #2048 : 1440
+cave_background = pygame.transform.scale(pygame.image.load('Assets/Cave.png').convert_alpha(), SCREEN_SIZE)
+town_background = pygame.image.load('Assets/Town.png').convert_alpha() #2048 : 1440
 changeX = changeY = 0
 townX, townY = -400, -200
-shop_background = pygame.transform.scale(pygame.image.load('Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.5,SCREEN_SIZE[1] * 1.5))
-board = pygame.image.load('Board.jpg').convert_alpha()
-board.set_colorkey((255, 255, 255))  # Make pure white transparent
+shop_background = pygame.transform.scale(pygame.image.load('Assets/Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.5,SCREEN_SIZE[1] * 1.5))
+paper = pygame.transform.scale(pygame.image.load('Assets/Paper.png').convert_alpha(), (262.5,350))
+paper.set_colorkey((255, 255, 255))  # Make pure white transparent
+paper_rect = paper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
+tatteredPaper = pygame.transform.scale(pygame.image.load('Assets/TatteredPaper.png').convert_alpha(), (262.5,350))
+tatteredPaper.set_colorkey((255, 255, 255))  # Make pure white transparent
+tatteredPaper_rect = tatteredPaper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
+
+'''
+paperButton = pygame.transform.scale(pygame.image.load('Assets/PaperButton.png').convert_alpha(), (43.75,43.75))
+paperButton.set_colorkey((255, 255, 255))  # Make pure white transparent
+paperButton_rect = paperButton.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
+'''
 
 #Extract tiles from tilemap
-tilemap = pygame.image.load('DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
+tilemap = pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
 TILE_WIDTH = 16
 TILE_HEIGHT = 16
 tiles = []
@@ -48,7 +58,7 @@ midLeft, mid, midRight = tiles[24], tiles[25], tiles[26]
 botLeft, botMid, botRight = tiles[36], tiles[37], tiles[38]
 
 #Extract characters
-charSheet = pygame.image.load('DwarvenDelve/DwarvenDelve/Characters/Dwarf/BlueMiner.png').convert_alpha()
+charSheet = pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Characters/Dwarf/BlueMiner.png').convert_alpha()
 charAnims = []
 map_width, map_height = charSheet.get_size()
 for y in range(0, map_height, TILE_HEIGHT):
@@ -74,9 +84,9 @@ idleLeft = [charLeft[0], charLeft[2]]
 idleRight = [charRight[0], charRight[2]]
 
 #Extract ores
-copperOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/CopperOre.png'), TILE_SIZE)
-silverOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/SilverOre.png'), TILE_SIZE)
-goldOre = pygame.transform.scale(pygame.image.load('DwarvenDelve/DwarvenDelve/Items/GoldOre.png'), TILE_SIZE)
+copperOre = pygame.transform.scale(pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Items/CopperOre.png'), TILE_SIZE)
+silverOre = pygame.transform.scale(pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Items/SilverOre.png'), TILE_SIZE)
+goldOre = pygame.transform.scale(pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Items/GoldOre.png'), TILE_SIZE)
 
 fullFog = pygame.Surface(TILE_SIZE)
 fullFog.fill((0, 0, 0))
@@ -887,6 +897,7 @@ while True:
 
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
                    
-    screen.blit(board, (600,300))
+    screen.blit(paper, paper_rect)
+    screen.blit(paperButton, paperButton_rect)
     pygame.display.update()
     clock.tick(60)
