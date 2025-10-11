@@ -20,7 +20,8 @@ frame_duration = 300
 frame_duration_town = 10000
 frame_index = 0
 
-game_font = pygame.font.Font(None, 50)
+gameMain_font = pygame.font.SysFont('ravie', 22)
+gameBody_font = pygame.font.SysFont('cooperblack', 20)
 cave_background = pygame.transform.scale(pygame.image.load('Assets/Cave.png').convert_alpha(), SCREEN_SIZE)
 town_background = pygame.image.load('Assets/Town.png').convert_alpha() #2048 : 1440
 changeX = changeY = 0
@@ -400,7 +401,8 @@ def deposit_ore():
 def show_main_menu(state):
     global screen
     screen.blit(cave_background, (0,0))
-    score_surface = game_font.render(state, True, 'Green')
+    screen.blit(paper, paper_rect)
+    score_surface = gameMain_font.render('Sundrop Caves', True, 'Black')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
     '''
@@ -432,7 +434,7 @@ def show_town_menu(state):
     if townY < -1440 or townY > 0:
         townY -= changeY
 
-    score_surface = game_font.render(state, True, 'Green')
+    score_surface = gameBody_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
     # TODO: Show Day
@@ -452,7 +454,7 @@ def show_town_menu(state):
 def show_shop(state):
     global screen
     screen.blit(shop_background, (0,0))
-    score_surface = game_font.render(state, True, 'Green')
+    score_surface = gameBody_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
     '''
@@ -497,7 +499,7 @@ def show_information(player):
 def show_sell_menu(state):
     global screen
     screen.blit(shop_background, (0,0))
-    score_surface = game_font.render(state, True, 'Green')
+    score_surface = gameBody_font.render(state, True, 'Green')
     score_rect = score_surface.get_rect(center = (400,50))
     screen.blit(score_surface, score_rect)
     '''
@@ -897,6 +899,6 @@ while True:
 
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
                    
-    screen.blit(paper, paper_rect)
+    
     pygame.display.update()
     clock.tick(60)
