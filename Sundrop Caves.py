@@ -30,7 +30,7 @@ shop_background = pygame.transform.scale(pygame.image.load('Assets/Shop.png').co
 paper = pygame.transform.scale(pygame.image.load('Assets/Paper.png').convert_alpha(), (262.5,350))
 paper.set_colorkey((255, 255, 255))  # Make pure white transparent
 paper_rect = paper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
-tatteredPaper = pygame.transform.scale(pygame.image.load('Assets/TatteredPaper.png').convert_alpha(), (262.5,350))
+tatteredPaper = pygame.transform.scale(pygame.image.load('Assets/TatteredPaper.png').convert_alpha(), (450,350))
 tatteredPaper.set_colorkey((255, 255, 255))  # Make pure white transparent
 tatteredPaper_rect = tatteredPaper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
 
@@ -39,6 +39,8 @@ paperButton = pygame.transform.scale(pygame.image.load('Assets/PaperButton.png')
 paperButton.set_colorkey((255, 255, 255))  # Make pure white transparent
 paperButton_rect = paperButton.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
 '''
+#Words blitting
+main_words = ['(N)ew Game', '(L)oad Saved Game', '(H)igh Scores', '(Q)uit']
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -213,7 +215,7 @@ def update_map(game_map, player):
     #Adding Player Coordinates
     game_map[player['y']][player['x']] = 'M'
     return game_map
-
+    
 def draw_view(game_map, player):
     x = player['x']
     y = player['y']
@@ -399,20 +401,36 @@ def deposit_ore():
         print('You deposited your ores in the warehouse.')
 
 def show_main_menu(state):
-    global screen
+    global screen, game_state, highscore_words
     screen.blit(cave_background, (0,0))
     screen.blit(paper, paper_rect)
-    score_surface = gameMain_font.render('Sundrop Caves', True, 'Black')
-    score_rect = score_surface.get_rect(center = (400,50))
-    screen.blit(score_surface, score_rect)
-    '''
-    print("--- Main Menu ----")
-    print("(N)ew game")
-    print("(L)oad saved game")
-    print("(H)igh scores")
-    print("(Q)uit")
-    print("------------------")
-    '''
+    if state == 'main':
+        title_surf = gameMain_font.render('Sundrop Caves', True, 'Black')
+        title_rect = title_surf.get_rect(center = (400,75))
+        screen.blit(title_surf, title_rect)
+        for word in main_words:
+            body_surf = gameBody_font.render(word, True, 'Black')
+            body_rect = body_surf.get_rect(center = (400,150 + 50 * main_words.index(word)))
+            screen.blit(body_surf, body_rect)
+    elif state == 'highscore':
+        title_surf = gameMain_font.render('Highscores', True, 'Black')
+        title_rect = title_surf.get_rect(center = (400,75))
+        screen.blit(title_surf, title_rect)
+        try:
+            if highscore_words == []:
+                highscore_words = load_highscores('highscores.txt')
+            if highscore_words == '~ No Record ~':
+                body_surf = gameBody_font.render('~ No Record ~', True, 'Black')
+                body_rect = body_surf.get_rect(center = (400,150))
+                screen.blit(body_surf, body_rect)
+            else:
+                for word in highscore_words:
+                    body_surf = gameBody_font.render(word, True, 'Black')
+                    body_rect = body_surf.get_rect(center = (400,150 + 40 * main_words.index(word)))
+                    screen.blit(body_surf, body_rect)
+        except:
+            print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+            game_state == 'main'
 
 def show_town_menu(state):
     global screen, townX, townY, current_tick, last_frame_time, frame_duration_town, changeX, changeY
@@ -434,9 +452,10 @@ def show_town_menu(state):
     if townY < -1440 or townY > 0:
         townY -= changeY
 
-    score_surface = gameBody_font.render(state, True, 'Green')
-    score_rect = score_surface.get_rect(center = (400,50))
-    screen.blit(score_surface, score_rect)
+    screen.blit(tatteredPaper, tatteredPaper_rect)
+    title_surf = gameMain_font.render(state, True, 'Black')
+    title_rect = title_surf.get_rect(center = (400,50))
+    screen.blit(title_surf, title_rect)
     # TODO: Show Day
     '''
     print(f'DAY {player['day']}')
@@ -561,10 +580,8 @@ def load_game(savefile):
 def load_highscores(highscore_file):
     try:
         with open(highscore_file, 'r') as textfile:
-            print()
-            print('-------------- High Scores --------------')
             if len(textfile.readlines()) == 0:
-                print('               (No Record)               ')
+                return '~ No Record ~'
             else:
                 #Add data into list
                 scores = []
@@ -582,13 +599,12 @@ def load_highscores(highscore_file):
                     with open(highscore_file, 'w') as file:
                         for item in scores:
                             file.write(item[0] + ',' + item[1] + ',' + item[2] + ',' + item[3] + '\n')
-
-                #Print
+                highscore_words = []
                 count = 1
                 for item in scores:
-                    print(f'{count}. {item[1]}: {item[0]} Days, {item[3]} Steps, {item[2]} GP.')
+                    highscore_words.append(f'{count}. {item[1]}: {item[0]} Days, {item[3]} Steps, {item[2]} GP.')
                     count += 1
-            print('-----------------------------------------')
+                return highscore_words
     except:
         raise FileNotFoundError
 
@@ -609,6 +625,7 @@ def game_end(highscore_file):
 #-------------GAME----------------#
 game_state = 'main'
 action = choice = move = option = sell = ''
+highscore_words = []
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
 
@@ -625,12 +642,15 @@ while True:
                 action = keyPressed
             elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
                 choice = keyPressed
-            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'm' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
+            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
                 move = keyPressed
             elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
                 option = keyPressed
             elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
                 sell = keyPressed
+            elif keyPressed == 'h' and game_state == 'highscore':
+                game_state = 'main'
+                highscore_words = []
 
     if game_state == 'main':
         show_main_menu(game_state)
@@ -657,10 +677,7 @@ while True:
                 print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
         
         elif choice == 'h':
-            try:
-                load_highscores('highscores.txt')
-            except:
-                print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+            game_state = 'highscore'
 
         elif choice == 'q':
             #Quit
@@ -669,6 +686,9 @@ while True:
             exit()
 
         choice = ''
+
+    if game_state == 'highscore':
+        show_main_menu(game_state)
 
     if game_state == 'town':
         show_town_menu(game_state)
@@ -681,10 +701,6 @@ while True:
         elif move == 'i':
             #Display Player Information
             show_information(player)
-
-        #elif move == 'm':
-            #View Map
-            #draw_map(game_map, fog, player)
 
         elif move == 'e':
             player['steps'] = 0
