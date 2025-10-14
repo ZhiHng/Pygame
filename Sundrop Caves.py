@@ -41,6 +41,8 @@ paperButton_rect = paperButton.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1
 '''
 #Words blitting
 main_words = ['(N)ew Game', '(L)oad Saved Game', '(H)igh Scores', '(Q)uit']
+town_words = ['(B)uy Stuff', '(S)ell Ores', 'See Player (I)nformation', '(E)nter Mine', 'Sa(V)e Game', '(Q)uit to Main Menu']
+infostatePrev = ''
 
 #Extract tiles from tilemap
 tilemap = pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Background/CaveTilemap.png').convert_alpha()
@@ -433,7 +435,7 @@ def show_main_menu(state):
             game_state == 'main'
 
 def show_town_menu(state):
-    global screen, townX, townY, current_tick, last_frame_time, frame_duration_town, changeX, changeY
+    global screen, townX, townY, current_tick, last_frame_time, frame_duration_town, changeX, changeY, infostatePrev
     screen.blit(town_background, (townX,townY))
     current_tick = pygame.time.get_ticks()
     if current_tick - last_frame_time > frame_duration_town:
@@ -453,22 +455,17 @@ def show_town_menu(state):
         townY -= changeY
 
     screen.blit(tatteredPaper, tatteredPaper_rect)
-    title_surf = gameMain_font.render(state, True, 'Black')
-    title_rect = title_surf.get_rect(center = (400,50))
-    screen.blit(title_surf, title_rect)
-    # TODO: Show Day
-    '''
-    print(f'DAY {player['day']}')
-    print("----- Sundrop Town -----")
-    print("(B)uy stuff")
-    print("(S)ell ores")
-    print("See Player (I)nformation")
-    print("See Mine (M)ap")
-    print("(E)nter mine")
-    print("Sa(V)e game")
-    print("(Q)uit to main menu")
-    print("------------------------")
-    '''
+    if infostatePrev == '':
+        title_surf = gameMain_font.render('Sundrop Town', True, 'Black')
+        title_rect = title_surf.get_rect(center = (400,60))
+        screen.blit(title_surf, title_rect)
+        title_surf = gameMain_font.render('Day ' + str(player['day']), True, 'Black')
+        title_rect = title_surf.get_rect(center = (400,90))
+        screen.blit(title_surf, title_rect)
+        for word in town_words:
+            body_surf = gameBody_font.render(word, True, 'Black')
+            body_rect = body_surf.get_rect(center = (400,130 + 40 * town_words.index(word)))
+            screen.blit(body_surf, body_rect)
 
 def show_shop(state):
     global screen
@@ -489,9 +486,19 @@ def show_shop(state):
     print('-----------------------------------------------------------')
     '''
 
-def show_information(player):
-    print()
-    print('----- Player Information -----')
+def show_information(player, statePrev):
+    if statePrev == 'mine':
+        screen.blit(tatteredPaper, tatteredPaper_rect)
+    title_surf = gameMain_font.render('Player Information', True, 'Black')
+    title_rect = title_surf.get_rect(center = (400,60))
+    screen.blit(title_surf, title_rect)
+
+
+    body_surf = gameBody_font.render(word, True, 'Black')
+    body_rect = body_surf.get_rect(center = (400,130 + 40 * town_words.index(word)))
+    screen.blit(body_surf, body_rect)
+    info_wordsLeft = []
+    info_wordsRight = []
     print(f'Name: {player['name']}')
 
     #Show Current position or portal position based on game state
@@ -638,7 +645,9 @@ while True:
             exit()
         if event.type == pygame.KEYDOWN:
             keyPressed = pygame.key.name(event.key)
-            if (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine':
+            if keyPressed == 'i' and infostatePrev != '':
+                infostatePrev = ''
+            elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine':
                 action = keyPressed
             elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
                 choice = keyPressed
@@ -651,6 +660,7 @@ while True:
             elif keyPressed == 'h' and game_state == 'highscore':
                 game_state = 'main'
                 highscore_words = []
+            
 
     if game_state == 'main':
         show_main_menu(game_state)
@@ -700,7 +710,7 @@ while True:
 
         elif move == 'i':
             #Display Player Information
-            show_information(player)
+            infostatePrev = 'town'
 
         elif move == 'e':
             player['steps'] = 0
@@ -723,6 +733,9 @@ while True:
             game_state = 'main'
 
         move = ''
+
+    if infostatePrev != '':
+        show_information(player, infostatePrev)
 
     #Shop
     if game_state == 'shop':
