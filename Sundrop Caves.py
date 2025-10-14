@@ -26,7 +26,7 @@ cave_background = pygame.transform.scale(pygame.image.load('Assets/Cave.png').co
 town_background = pygame.image.load('Assets/Town.png').convert_alpha() #2048 : 1440
 changeX = changeY = 0
 townX, townY = -400, -200
-shop_background = pygame.transform.scale(pygame.image.load('Assets/Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.5,SCREEN_SIZE[1] * 1.5))
+shop_background = pygame.transform.scale(pygame.image.load('Assets/Shop.png').convert_alpha(), (SCREEN_SIZE[0] * 1.1,SCREEN_SIZE[1] * 1.1))
 paper = pygame.transform.scale(pygame.image.load('Assets/Paper.png').convert_alpha(), (262.5,350))
 paper.set_colorkey((255, 255, 255))  # Make pure white transparent
 paper_rect = paper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
@@ -469,22 +469,29 @@ def show_town_menu(state):
 
 def show_shop(state):
     global screen
-    screen.blit(shop_background, (0,0))
-    score_surface = gameBody_font.render(state, True, 'Green')
-    score_rect = score_surface.get_rect(center = (400,50))
-    screen.blit(score_surface, score_rect)
-    '''
-    print('----------------------- Shop Menu -------------------------')
+    screen.blit(shop_background, (-40,-30))
+    screen.blit(tatteredPaper, tatteredPaper_rect)
+    title_surf = gameMain_font.render('Shop Menu', True, 'Black')
+    title_rect = title_surf.get_rect(center = (400,60))
+    screen.blit(title_surf, title_rect)
+
+    shop_words = []
+
+    shop_words.append(f'GP: {player['GP']}')
     if player['pickaxe'] != 3:
-        print(f'(P)ickaxe upgrade to Level {player['pickaxe'] + 1} to mine {minerals[player['pickaxe']]} ore for {pickaxe_price[player['pickaxe'] - 1]} GP')
-    print(f'(B)ackpack upgrade to carry {player['backpack'] + 2} items for {player['backpack'] * 2} GP')
+        shop_words.append(f'(P)ickaxe upgrade to Level {player['pickaxe'] + 1} to')
+        shop_words.append(f'      mine {minerals[player['pickaxe']]} ore for {pickaxe_price[player['pickaxe'] - 1]} GP')
+    shop_words.append('(B)ackpack upgrade to carry')
+    shop_words.append(f'      {player['backpack'] + 2} items for {player['backpack'] * 2} GP')
     if player['torch'] == 3:
-        print('(M)agic torch to view a 5x5 radius in the mines for 50 GP')
-    print('(L)eave shop')
-    print('-----------------------------------------------------------')
-    print(f'GP: {player['GP']}')
-    print('-----------------------------------------------------------')
-    '''
+        shop_words.append('(M)agic torch to view a 5x5')
+        shop_words.append('      radius in the mines for 50 GP')
+    shop_words.append('(L)eave shop')
+
+    for word in shop_words:
+        body_surf = gameBody_font.render(word, True, 'Black')
+        body_rect = body_surf.get_rect(midleft = (220,80 + 35 * shop_words.index(word)))
+        screen.blit(body_surf, body_rect)
 
 def show_information(player, statePrev):
     if statePrev == 'mine':
@@ -493,34 +500,41 @@ def show_information(player, statePrev):
     title_rect = title_surf.get_rect(center = (400,60))
     screen.blit(title_surf, title_rect)
 
-
-    body_surf = gameBody_font.render(word, True, 'Black')
-    body_rect = body_surf.get_rect(center = (400,130 + 40 * town_words.index(word)))
-    screen.blit(body_surf, body_rect)
     info_wordsLeft = []
     info_wordsRight = []
-    print(f'Name: {player['name']}')
+
+    info_wordsLeft.append(f'Name: {player['name']}')
 
     #Show Current position or portal position based on game state
     if game_state == 'mine':
-        print(f'Current position: ({player['x']}, {player['y']})')
+        info_wordsLeft.append(f'Current position: ({player['x']}, {player['y']})')
     else:
-        print(f'Portal position: ({player['portalx']}, {player['portaly']})')
+        info_wordsLeft.append(f'Portal position: ({player['portalx']} , {player['portaly']})')
     
-    print(f'Pickaxe level: {player['pickaxe']} ({minerals[player['pickaxe'] - 1]})')
+    info_wordsLeft.append(f'Pickaxe level: {player['pickaxe']} ({minerals[player['pickaxe'] - 1]})')
+    info_wordsLeft.append(f'Steps taken: {player['total_steps']}')
 
     #Show ores if carrying ores
     if calculate_load() != 0:
-        print(f'Gold: {player['gold']}')
-        print(f'Silver: {player['silver']}')
-        print(f'Copper: {player['copper']}')
+        info_wordsLeft.append(f'Gold: {player['gold']}')
+        info_wordsLeft.append(f'Silver: {player['silver']}')
+        info_wordsLeft.append(f'Copper: {player['copper']}')
     
-    print('------------------------------')
-    print(f'Load: {calculate_load()} / {player['backpack']}  Warehouse: {sum(player['warehouse'])} / {WAREHOUSE_SIZE}')
-    print('------------------------------')
-    print(f'GP: {player['GP']}')
-    print(f'Steps taken: {player['total_steps']}')
-    print('------------------------------')
+    info_wordsRight.append(f'Day {player['day']}')
+    info_wordsRight.append(f'GP: {player['GP']}')
+    info_wordsRight.append('Load ')
+    info_wordsRight.append(f'{calculate_load()} / {player['backpack']} ')
+    info_wordsRight.append('Warehouse ')
+    info_wordsRight.append(f'{sum(player['warehouse'])} / {WAREHOUSE_SIZE} ')
+
+    for word in info_wordsLeft:
+        body_surf = gameBody_font.render(word, True, 'Black')
+        body_rect = body_surf.get_rect(midleft = (220,100 + 40 * info_wordsLeft.index(word)))
+        screen.blit(body_surf, body_rect)
+    for word in info_wordsRight:
+        body_surf = gameBody_font.render(word, True, 'Black')
+        body_rect = body_surf.get_rect(midright = (575,100 + 40 * info_wordsRight.index(word)))
+        screen.blit(body_surf, body_rect)
 
 def show_sell_menu(state):
     global screen
