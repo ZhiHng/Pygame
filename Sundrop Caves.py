@@ -178,7 +178,7 @@ def initialize_game(game_map, player):
     player['pickaxe'] = 1
     player['backpack'] = 10
     player['warehouse'] = [0, 0 ,0]
-    player['name'] = 'Player'
+    player['name'] = 'Player' #Max 10 char
     player['portalx'] = 0
     player['portaly'] = 0
     player['torch'] = 3
@@ -428,7 +428,7 @@ def show_main_menu(state):
             else:
                 for word in highscore_words:
                     body_surf = gameBody_font.render(word, True, 'Black')
-                    body_rect = body_surf.get_rect(center = (400,150 + 40 * main_words.index(word)))
+                    body_rect = body_surf.get_rect(midleft = (290,105 + 25 * highscore_words.index(word)))
                     screen.blit(body_surf, body_rect)
         except:
             print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
@@ -529,11 +529,11 @@ def show_information(player, statePrev):
 
     for word in info_wordsLeft:
         body_surf = gameBody_font.render(word, True, 'Black')
-        body_rect = body_surf.get_rect(midleft = (220,100 + 40 * info_wordsLeft.index(word)))
+        body_rect = body_surf.get_rect(midleft = (220,90 + 40 * info_wordsLeft.index(word)))
         screen.blit(body_surf, body_rect)
     for word in info_wordsRight:
         body_surf = gameBody_font.render(word, True, 'Black')
-        body_rect = body_surf.get_rect(midright = (575,100 + 40 * info_wordsRight.index(word)))
+        body_rect = body_surf.get_rect(midright = (575,90 + 40 * info_wordsRight.index(word)))
         screen.blit(body_surf, body_rect)
 
 def show_sell_menu(state):
@@ -557,21 +557,24 @@ def show_sell_menu(state):
     sell_wordsRight.append(f'Silver: {player['silver'] + player['warehouse'][1]}')
     sell_wordsRight.append(f'Gold: {player['gold'] + player['warehouse'][0]}')
     sell_wordsLeft.append('')
+    sell_wordsRight.append(f'GP: {player['GP']}')
+    sell_wordsRight.append('')
+    sell_wordsRight.append('')
     if player['copper'] + player['warehouse'][2] != 0:
         sell_wordsLeft.append('Sell (C)opper')
     if player['silver'] + player['warehouse'][1] != 0:
         sell_wordsLeft.append('Sell (S)ilver')
     if player['gold'] + player['warehouse'][0] != 0:
         sell_wordsLeft.append('Sell (G)old')
-    sell_wordsLeft.append('(L)eave')
+    sell_wordsRight.append('(L)eave')
 
     for word in sell_wordsLeft:
         body_surf = gameBody_font.render(word, True, 'Black')
-        body_rect = body_surf.get_rect(midleft = (220,90 + 35 * sell_wordsLeft.index(word)))
+        body_rect = body_surf.get_rect(midleft = (220,90 + 33 * sell_wordsLeft.index(word)))
         screen.blit(body_surf, body_rect)
     for word in sell_wordsRight:
         body_surf = gameBody_font.render(word, True, 'Black')
-        body_rect = body_surf.get_rect(midright = (575,90 + 35 * sell_wordsRight.index(word)))
+        body_rect = body_surf.get_rect(midright = (575,90 + 33 * sell_wordsRight.index(word)))
         screen.blit(body_surf, body_rect)
 
 # This function saves the game
@@ -635,7 +638,8 @@ def load_highscores(highscore_file):
                 highscore_words = []
                 count = 1
                 for item in scores:
-                    highscore_words.append(f'{count}. {item[1]}: {item[0]} Days, {item[3]} Steps, {item[2]} GP.')
+                    highscore_words.append(f'{count}. {item[1]}: {item[0]} Days,')
+                    highscore_words.append(f'    {item[3]} Steps, {item[2]} GP.')
                     count += 1
                 return highscore_words
     except:
@@ -673,7 +677,7 @@ while True:
             keyPressed = pygame.key.name(event.key)
             if keyPressed == 'i' and infostatePrev != '':
                 infostatePrev = ''
-            elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine':
+            elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
                 action = keyPressed
             elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
                 choice = keyPressed
@@ -708,6 +712,7 @@ while True:
                     else:
                         game_map, fog, player = load_game('savefile.json')
                         game_state = 'town'
+                        ore_price = set_ore_price()
                         print('Game loaded.')
             except:
                 print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
@@ -760,8 +765,7 @@ while True:
 
         move = ''
 
-    if infostatePrev != '':
-        show_information(player, infostatePrev)
+    
 
     #Shop
     if game_state == 'shop':
@@ -823,7 +827,6 @@ while True:
 
     #Mine Code
     if game_state == 'mine':
-        #show_mine_menu()
         if moving == False:
             if action == 'w' or action == 'a' or action == 's' or action == 'd':
                 view = draw_view(game_map, player)
@@ -831,13 +834,9 @@ while True:
                 if player['steps'] == player['turns']:
                     portal_stone(True)
 
-            #elif action == 'm':
-                #View Map
-                #draw_map(game_map, fog, player)
-
             elif action == 'i':
                 #View Information
-                show_information(player)
+                infostatePrev = 'mine'
 
             elif action == 'p':
                 #Use Portal Stone
@@ -953,7 +952,9 @@ while True:
                     screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
 
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
-                   
+
+    if infostatePrev != '':
+        show_information(player, infostatePrev)               
     
     pygame.display.update()
     clock.tick(60)
