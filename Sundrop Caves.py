@@ -538,29 +538,41 @@ def show_information(player, statePrev):
 
 def show_sell_menu(state):
     global screen
-    screen.blit(shop_background, (0,0))
-    score_surface = gameBody_font.render(state, True, 'Green')
-    score_rect = score_surface.get_rect(center = (400,50))
-    screen.blit(score_surface, score_rect)
-    '''
-    print("------ Ore Prices ------")
-    print(f'Copper: {ore_price['copper']} GP')
-    print(f'Silver: {ore_price['silver']} GP')
-    print(f'Gold: {ore_price['gold']} GP')
-    print("------ Inventory -------")
-    print(f'Copper: {player['copper'] + player['warehouse'][2]}')
-    print(f'Silver: {player['silver'] + player['warehouse'][1]}')
-    print(f'Gold: {player['gold'] + player['warehouse'][0]}')
-    print("------------------------")
+    screen.blit(shop_background, (-40,-30))
+    screen.blit(tatteredPaper, tatteredPaper_rect)
+    title_surf = gameMain_font.render('Sell Menu', True, 'Black')
+    title_rect = title_surf.get_rect(center = (400,60))
+    screen.blit(title_surf, title_rect)
+
+    sell_wordsLeft = []
+    sell_wordsRight = []
+
+    sell_wordsLeft.append("Today's Ore Prices")
+    
+    sell_wordsLeft.append(f'Copper: {ore_price['copper']} GP')
+    sell_wordsLeft.append(f'Silver: {ore_price['silver']} GP')
+    sell_wordsLeft.append(f'Gold: {ore_price['gold']} GP')
+    sell_wordsRight.append("Inventory")
+    sell_wordsRight.append(f'Copper: {player['copper'] + player['warehouse'][2]}')
+    sell_wordsRight.append(f'Silver: {player['silver'] + player['warehouse'][1]}')
+    sell_wordsRight.append(f'Gold: {player['gold'] + player['warehouse'][0]}')
+    sell_wordsLeft.append('')
     if player['copper'] + player['warehouse'][2] != 0:
-        print('Sell (C)opper')
+        sell_wordsLeft.append('Sell (C)opper')
     if player['silver'] + player['warehouse'][1] != 0:
-        print('Sell (S)ilver')
+        sell_wordsLeft.append('Sell (S)ilver')
     if player['gold'] + player['warehouse'][0] != 0:
-        print('Sell (G)old')
-    print('(L)eave')
-    print("------------------------")
-    '''
+        sell_wordsLeft.append('Sell (G)old')
+    sell_wordsLeft.append('(L)eave')
+
+    for word in sell_wordsLeft:
+        body_surf = gameBody_font.render(word, True, 'Black')
+        body_rect = body_surf.get_rect(midleft = (220,90 + 35 * sell_wordsLeft.index(word)))
+        screen.blit(body_surf, body_rect)
+    for word in sell_wordsRight:
+        body_surf = gameBody_font.render(word, True, 'Black')
+        body_rect = body_surf.get_rect(midright = (575,90 + 35 * sell_wordsRight.index(word)))
+        screen.blit(body_surf, body_rect)
 
 # This function saves the game
 def save_game(game_map, fog, player, savefile):
