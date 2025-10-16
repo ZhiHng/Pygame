@@ -178,7 +178,7 @@ def initialize_game(game_map, player):
     player['pickaxe'] = 1
     player['backpack'] = 10
     player['warehouse'] = [0, 0 ,0]
-    player['name'] = 'Player' #Max 10 char
+    player['name'] = '' #Max 10 char
     player['portalx'] = 0
     player['portaly'] = 0
     player['torch'] = 3
@@ -661,7 +661,8 @@ def game_end(highscore_file):
 
 #-------------GAME----------------#
 game_state = 'main'
-action = choice = move = option = sell = ''
+action = choice = move = option = sell = key = ''
+name = ''
 highscore_words = []
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
@@ -674,33 +675,41 @@ while True:
             pygame.quit()
             exit()
         if event.type == pygame.KEYDOWN:
-            keyPressed = pygame.key.name(event.key)
-            if keyPressed == 'i' and infostatePrev != '':
-                infostatePrev = ''
-            elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
-                action = keyPressed
-            elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
-                choice = keyPressed
-            elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
-                move = keyPressed
-            elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
-                option = keyPressed
-            elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
-                sell = keyPressed
-            elif keyPressed == 'h' and game_state == 'highscore':
-                game_state = 'main'
-                highscore_words = []
+            if game_state == 'name':
+                if event.key == pygame.K_BACKSPACE:
+                    key = 'backspace'
+                elif event.key == pygame.K_RETURN:
+                    key = 'enter'
+                elif event.unicode and event.unicode.isprintable():
+                    key = event.unicode
+            else:
+                keyPressed = pygame.key.name(event.key).lower()
+                if keyPressed == 'i' and infostatePrev != '':
+                    infostatePrev = ''
+                elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
+                    action = keyPressed
+                elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
+                    choice = keyPressed
+                elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
+                    move = keyPressed
+                elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
+                    option = keyPressed
+                elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
+                    sell = keyPressed
+                elif keyPressed == 'h' and game_state == 'highscore':
+                    game_state = 'main'
+                    highscore_words = []
+            
             
 
     if game_state == 'main':
         show_main_menu(game_state)
-        if choice == 'n' or game_state == 'town':
-            if game_state == 'main':
-                #New Game
-                initialize_game(game_map, player)
-                #player['name'] = get_name()
-                
-            game_state = 'town'
+        if choice == 'n':
+            
+            #New Game
+            initialize_game(game_map, player)
+            name = ''
+            game_state = 'name'
             ore_price = set_ore_price()
 
         elif choice == 'l':
@@ -727,6 +736,22 @@ while True:
             exit()
 
         choice = ''
+
+    if game_state == 'name':
+        if key != '':
+            if key == 'backspace' and len(name) > 0:
+                name = name[:-1]
+            elif key == 'enter':
+                player['name'] = name
+                game_state = 'town'
+            elif len(name) < 10 and key != 'backspace' and key != 'enter':
+                name += key
+
+        body_surf = gameBody_font.render(name, True, 'Red')
+        body_rect = body_surf.get_rect(center = (220,90))
+        screen.blit(body_surf, body_rect)
+
+        key = ''
 
     if game_state == 'highscore':
         show_main_menu(game_state)
