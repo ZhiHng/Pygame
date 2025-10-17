@@ -18,6 +18,7 @@ clock = pygame.time.Clock()
 last_frame_time = 0
 frame_duration = 300
 frame_duration_town = 10000
+frame_duration_portal = 200
 frame_index = 0
 
 gameMain_font = pygame.font.SysFont('ravie', 22)
@@ -40,11 +41,6 @@ trans_screen = pygame.Surface((800,400))
 trans_screen.fill((0, 0, 0))
 transition_speed = 10
 
-'''
-paperButton = pygame.transform.scale(pygame.image.load('Assets/PaperButton.png').convert_alpha(), (43.75,43.75))
-paperButton.set_colorkey((255, 255, 255))  # Make pure white transparent
-paperButton_rect = paperButton.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
-'''
 #Words blitting
 main_words = ['(N)ew Game', '(L)oad Saved Game', '(H)igh Scores', '(Q)uit']
 town_words = ['(B)uy Stuff', '(S)ell Ores', 'See Player (I)nformation', '(E)nter Mine', 'Sa(V)e Game', '(Q)uit to Main Menu']
@@ -105,6 +101,16 @@ fullFog.set_alpha(150)
 halfFog = pygame.Surface(TILE_SIZE)
 halfFog.fill((0, 0, 0))
 halfFog.set_alpha(100)
+
+#Extract Portal Animation
+portalSheet = pygame.image.load('Assets/PORTAL ORANGE-Sheet.png').convert_alpha()
+portalAnims = []
+map_width, map_height = charSheet.get_size()
+for x in range(0, map_width, 64):
+    rect = pygame.Rect(x, 0, 64, 64)
+    tile = portalSheet.subsurface(rect)
+    scaled_tile = pygame.transform.scale(tile, (128,128))
+    portalAnims.append(scaled_tile)
 
 #game init
 player = {}
@@ -346,18 +352,18 @@ def determine_updownleftright(x, y):
         upDown = y
 
 def portal_stone(tired):
+    global portal
     if tired == True:
         print('You are exhausted.')
     print('You place your portal stone here and zap back to town.')
     game_map[player['portaly']][player['portalx']] = ' ' #Remove old portal stone from map
     player['portalx'], player['portaly'] = player['x'], player['y'] #Set portal stone position
-    
+    portal = True
     return_town()
 
 def return_town():
     global ore_price
     global transition_state, transition_screen
-    player['x'], player['y'] = 0, 0
     player['day'] += 1
     ore_price = set_ore_price()
     deposit_ore()
@@ -674,6 +680,7 @@ highscore_words = []
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
 transition_screen, transition_opacity, transition_state = 0, 0, ''
+portal = False
 
 
 while True:
@@ -1015,6 +1022,13 @@ while True:
 
         screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
 
+        if portal == True:
+            current_tick = pygame.time.get_ticks()
+            if current_tick - last_frame_time > frame_duration_portal:
+                frame_index = (frame_index + 1) % len(portalAnims)
+                last_frame_time = current_tick
+            screen.blit(portalAnims[frame_index], (MID_SCREENX - TILE_SIZE[0] / 1.5, MID_SCREENY - TILE_SIZE[1]))
+
     if infostatePrev != '':
         show_information(player, infostatePrev)               
     
@@ -1025,6 +1039,9 @@ while True:
         if transition_opacity >= 255:
             transition_screen = -transition_speed
             game_state = transition_state
+            if transition_state == 'town':
+                player['x'], player['y'] = 0, 0
+                portal = False
             transition_state = ''
         if transition_screen == -transition_speed and transition_opacity <= 0:
             transition_screen = 0
