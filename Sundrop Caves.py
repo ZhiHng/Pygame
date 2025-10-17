@@ -33,6 +33,12 @@ paper_rect = paper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
 tatteredPaper = pygame.transform.scale(pygame.image.load('Assets/TatteredPaper.png').convert_alpha(), (450,350))
 tatteredPaper.set_colorkey((255, 255, 255))  # Make pure white transparent
 tatteredPaper_rect = tatteredPaper.get_rect(center = (SCREEN_SIZE[0]/2,SCREEN_SIZE[1]/2))
+nameInput_surf = pygame.Surface((225,35))
+nameInput_surf.fill('White')
+nameInput_rect = nameInput_surf.get_rect(center = (400,202))
+trans_screen = pygame.Surface((800,400))
+trans_screen.fill((0, 0, 0))
+transition_speed = 10
 
 '''
 paperButton = pygame.transform.scale(pygame.image.load('Assets/PaperButton.png').convert_alpha(), (43.75,43.75))
@@ -350,12 +356,13 @@ def portal_stone(tired):
 
 def return_town():
     global ore_price
-    global game_state
+    global transition_state, transition_screen
     player['x'], player['y'] = 0, 0
     player['day'] += 1
     ore_price = set_ore_price()
     deposit_ore()
-    game_state = 'town'
+    transition_screen = transition_speed
+    transition_state = 'town'
 
 def set_ore_price():
     copper = randint(*prices['copper'])
@@ -666,6 +673,8 @@ name = ''
 highscore_words = []
 #Player animation variables
 moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
+transition_screen, transition_opacity, transition_state = 0, 0, ''
+
 
 while True:
     screen.fill((0, 0, 0))
@@ -675,41 +684,40 @@ while True:
             pygame.quit()
             exit()
         if event.type == pygame.KEYDOWN:
-            if game_state == 'name':
-                if event.key == pygame.K_BACKSPACE:
-                    key = 'backspace'
-                elif event.key == pygame.K_RETURN:
-                    key = 'enter'
-                elif event.unicode and event.unicode.isprintable():
-                    key = event.unicode
-            else:
-                keyPressed = pygame.key.name(event.key).lower()
-                if keyPressed == 'i' and infostatePrev != '':
-                    infostatePrev = ''
-                elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
-                    action = keyPressed
-                elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
-                    choice = keyPressed
-                elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
-                    move = keyPressed
-                elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
-                    option = keyPressed
-                elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
-                    sell = keyPressed
-                elif keyPressed == 'h' and game_state == 'highscore':
-                    game_state = 'main'
-                    highscore_words = []
-            
-            
+            if transition_screen == 0:
+                if game_state == 'name':
+                    if event.key == pygame.K_BACKSPACE:
+                        key = 'backspace'
+                    elif event.key == pygame.K_RETURN:
+                        key = 'enter'
+                    elif event.unicode and event.unicode.isprintable():
+                        key = event.unicode
+                else:
+                    keyPressed = pygame.key.name(event.key).lower()
+                    if keyPressed == 'i' and infostatePrev != '':
+                        infostatePrev = ''
+                    elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
+                        action = keyPressed
+                    elif (keyPressed == 'n' or keyPressed == 'l' or keyPressed == 'h' or keyPressed == 'q') and game_state == 'main':
+                        choice = keyPressed
+                    elif (keyPressed == 'b' or keyPressed == 's' or keyPressed == 'i' or keyPressed == 'e' or keyPressed == 'v' or keyPressed == 'q') and game_state == 'town':
+                        move = keyPressed
+                    elif (keyPressed == 'p' or keyPressed == 'b' or keyPressed == 'm' or keyPressed == 'l') and game_state == 'shop':
+                        option = keyPressed
+                    elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
+                        sell = keyPressed
+                    elif keyPressed == 'h' and game_state == 'highscore':
+                        game_state = 'main'
+                        highscore_words = []    
 
     if game_state == 'main':
         show_main_menu(game_state)
         if choice == 'n':
-            
             #New Game
             initialize_game(game_map, player)
             name = ''
-            game_state = 'name'
+            transition_screen = transition_speed
+            transition_state = 'name'
             ore_price = set_ore_price()
 
         elif choice == 'l':
@@ -720,7 +728,8 @@ while True:
                         print('No save data found.')
                     else:
                         game_map, fog, player = load_game('savefile.json')
-                        game_state = 'town'
+                        transition_screen = transition_speed
+                        transition_state = 'town'
                         ore_price = set_ore_price()
                         print('Game loaded.')
             except:
@@ -743,14 +752,36 @@ while True:
                 name = name[:-1]
             elif key == 'enter':
                 player['name'] = name
-                game_state = 'town'
+                transition_screen = transition_speed
+                transition_state = 'town'
             elif len(name) < 10 and key != 'backspace' and key != 'enter':
                 name += key
 
-        body_surf = gameBody_font.render(name, True, 'Red')
-        body_rect = body_surf.get_rect(center = (220,90))
-        screen.blit(body_surf, body_rect)
+        screen.blit(paper, paper_rect)
 
+        nameMain_words = []
+        nameMain_words.append('Greetings, miner!')
+        nameMain_words.append('What is your name?')
+        for word in nameMain_words:
+            main_surf = gameBody_font.render(word, True, 'Black')
+            main_rect = main_surf.get_rect(center = (400,110 + 30 * nameMain_words.index(word)))
+            screen.blit(main_surf, main_rect)
+
+        pygame.draw.rect(screen,'White', nameInput_rect, 0, 20)
+        pygame.draw.rect(screen,'Black', nameInput_rect, 6, 20)
+        
+        body_surf = gameBody_font.render(name, True, 'Red')
+        body_rect = body_surf.get_rect(center = (400,200))
+        screen.blit(body_surf, body_rect)
+        '''
+        print("---------------- Welcome to Sundrop Caves! ----------------")
+        print("You spent all your money to get the deed to a mine, a small")
+        print("  backpack, a simple pickaxe and a magical portal stone.")
+        print()
+        print("How quickly can you get the 500 GP you need to retire")
+        print("  and live happily ever after?")
+        print("-----------------------------------------------------------")
+        '''
         key = ''
 
     if game_state == 'highscore':
@@ -759,10 +790,12 @@ while True:
     if game_state == 'town':
         show_town_menu(game_state)
         if move == 'b':
-            game_state = 'shop'
+            transition_screen = transition_speed
+            transition_state = 'shop'
 
         elif move == 's':
-            game_state = 'sell'
+            transition_screen = transition_speed
+            transition_state = 'sell'
 
         elif move == 'i':
             #Display Player Information
@@ -774,7 +807,8 @@ while True:
             clear_fog(player)
 
             #Enter Mine
-            game_state = 'mine'
+            transition_screen = transition_speed
+            transition_state = 'mine'
 
         elif move == 'v':
             #Save Game
@@ -786,11 +820,10 @@ while True:
 
         elif move == 'q':
             #Back to main menu
-            game_state = 'main'
+            transition_screen = transition_speed
+            transition_state = 'main'
 
         move = ''
-
-    
 
     #Shop
     if game_state == 'shop':
@@ -825,7 +858,8 @@ while True:
         elif option == 'l':
             print('Bye! See you again!')
             #Leave
-            game_state = 'town'
+            transition_screen = transition_speed
+            transition_state = 'town'
 
         option = ''
 
@@ -843,10 +877,12 @@ while True:
 
         elif sell == 'l':
             print('Bye, See you again! New ore prices daily!')
-            game_state = 'town'
+            transition_screen = transition_speed
+            transition_state = 'town'
         
         if player['GP'] >= WIN_GP:
-            game_state = game_end('highscores.txt')
+            transition_screen = transition_speed
+            transition_state = game_end('highscores.txt')
         
         sell = ''
 
@@ -869,7 +905,8 @@ while True:
 
             elif action == 'q':
                 #Quit to main menu
-                game_state = 'main'
+                transition_screen = transition_speed
+                transition_state = 'main'
 
         action = ''
 
@@ -981,5 +1018,17 @@ while True:
     if infostatePrev != '':
         show_information(player, infostatePrev)               
     
+    if transition_screen != 0:
+        transition_opacity += transition_screen
+        trans_screen.set_alpha(transition_opacity)
+        screen.blit(trans_screen, (0,0))
+        if transition_opacity >= 255:
+            transition_screen = -transition_speed
+            game_state = transition_state
+            transition_state = ''
+        if transition_screen == -transition_speed and transition_opacity <= 0:
+            transition_screen = 0
+            transition_opacity = 0
+
     pygame.display.update()
     clock.tick(60)
