@@ -44,6 +44,11 @@ transition_speed = 10
 #Words blitting
 main_words = ['(N)ew Game', '(L)oad Saved Game', '(H)igh Scores', '(Q)uit']
 town_words = ['(B)uy Stuff', '(S)ell Ores', 'See Player (I)nformation', '(E)nter Mine', 'Sa(V)e Game', '(Q)uit to Main Menu']
+intro2_words = ['You spent all your money to get the deed to a mine, a small','backpack, a simple pickaxe and a magical portal stone.']
+intro3_words = ['How quickly can you get the 500 GP you need to retire','and live happily ever after?']
+popup_words = []
+popup_ticks = []
+popup_colour = []
 infostatePrev = ''
 
 #Extract tiles from tilemap
@@ -300,7 +305,9 @@ def determine_grid_and_action(row, col, view):
     difference = math.floor(player['torch'] / 2)
     #Checks only the viewport and not the whole map when moving
     if view[row][col] == '#':
-        print('You ran into the wall.')
+        popup('You ran into the wall.','Red')
+        player['steps'] += 1
+        player['total_steps'] += 1
 
     elif view[row][col] == ' ' or view[row][col] == 'P':
         #Move
@@ -308,13 +315,15 @@ def determine_grid_and_action(row, col, view):
         moving = True
         determine_updownleftright(col - difference, row - difference - 1)
 
-    #elif view[row][col] == 'T':
-    #    game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
-    #    return_town() #Go back to 'T' goes back town
+    elif view[row][col] == 'T':
+        game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
+        return_town() #Go back to 'T' goes back town
 
     elif mineral_names[view[row][col]] not in minerals[0:player['pickaxe']]:
         #Only can mine ores available for the pickaxe lvl
-        print(f'Your pickaxe is not good enough to mine {mineral_names[view[row][col]]}.')
+        popup(f'Your pickaxe is not good enough to mine {mineral_names[view[row][col]]}.','Red')
+        player['steps'] += 1
+        player['total_steps'] += 1
 
     else:
         if calculate_load() != player['backpack']:
@@ -329,14 +338,17 @@ def determine_grid_and_action(row, col, view):
             adding = min(ore_count, player['backpack'] - calculate_load())
             player[mineral_names[view[row][col]]] += adding
             
-            print(f'You mined {ore_count} piece(s) of {mineral_names[view[row][col]]}')
+            msg = f'You mined {ore_count} piece(s) of {mineral_names[view[row][col]]}'
             #Message for overflow load
             if adding != ore_count:
-                print(f'...but you can only carry {adding} more piece(s)!')
+                msg += f' but you can only carry {adding} more piece(s)!'
+            popup(msg,'Blue')
 
         else:
-            print("You can't carry any more, so you can't go that way.")
-
+            popup("You can't carry any more, so you can't go that way.",'Red')
+            player['steps'] += 1
+            player['total_steps'] += 1
+            
 def calculate_load():
     count = 0
     count += player['copper']
@@ -353,9 +365,11 @@ def determine_updownleftright(x, y):
 
 def portal_stone(tired):
     global portal
+    msg = ''
     if tired == True:
-        print('You are exhausted.')
-    print('You place your portal stone here and zap back to town.')
+        msg += 'You are exhausted. '
+    msg += 'You place your portal stone here and zap back to town.'
+    popup(msg,'Blue')
     game_map[player['portaly']][player['portalx']] = ' ' #Remove old portal stone from map
     player['portalx'], player['portaly'] = player['x'], player['y'] #Set portal stone position
     portal = True
@@ -377,30 +391,30 @@ def set_ore_price():
     return {'copper': copper, 'silver': silver, 'gold': gold}
 
 def sell_ore(copper, silver, gold):
-    print('\n------------------------------------------------------')
     total_gp = 0
-    
+    msg = ''
     if copper == True:
         gp = (player['copper'] + player['warehouse'][2]) * ore_price['copper']
         total_gp += gp
-        print(f'You sell {player['copper'] + player['warehouse'][2]} copper ore for {gp} GP.')
+        msg += f'You sell {player['copper'] + player['warehouse'][2]} copper ore for {gp} GP.'
         player['copper'], player['warehouse'][2] = 0, 0
 
     if silver == True:
         gp = (player['silver'] + player['warehouse'][1]) * ore_price['silver']
         total_gp += gp
-        print(f'You sell {player['silver'] + player['warehouse'][1]} silver ore for {gp} GP.') 
+        msg += f'You sell {player['silver'] + player['warehouse'][1]} silver ore for {gp} GP.'
         player['silver'], player['warehouse'][1] = 0, 0
 
     if gold == True:
         gp = (player['gold'] + player['warehouse'][0]) * ore_price['gold']
         total_gp += gp
-        print(f'You sell {player['gold'] + player['warehouse'][0]} gold ore for {gp} GP.')
+        msg += f'You sell {player['gold'] + player['warehouse'][0]} gold ore for {gp} GP.'
         player['gold'], player['warehouse'][0] = 0, 0
 
     if total_gp != 0:
         player['GP'] += total_gp
-        print(f'You now have {player['GP']} GP!')
+        msg += f' You now have {player['GP']} GP!'
+        popup(msg,'Blue')
         deposit_ore()
 
 def deposit_ore():
@@ -413,7 +427,7 @@ def deposit_ore():
         player[ores] -= store_amount
         player['warehouse'][priority.index(ores)] += store_amount
     if store_amount > 0:
-        print('You deposited your ores in the warehouse.')
+        popup('You deposited your ores in the warehouse.','Blue')
 
 def show_main_menu(state):
     global screen, game_state, highscore_words
@@ -444,7 +458,7 @@ def show_main_menu(state):
                     body_rect = body_surf.get_rect(midleft = (290,105 + 25 * highscore_words.index(word)))
                     screen.blit(body_surf, body_rect)
         except:
-            print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+            popup("Highscores file not found. Please create a file 'highscores.txt' in the game folder.",'Red')
             game_state == 'main'
 
 def show_town_menu(state):
@@ -668,9 +682,15 @@ def game_end(highscore_file):
         with open(highscore_file, 'a') as textfile:
             textfile.write(str(player['day']) + ',' + player['name'] + ',' + str(player['GP']) + ',' + str(player['total_steps']) + '\n')
     except:
-        print("Highscores file not found. Please create a file 'highscores.txt' in the same folder as the game.")
+        popup("Highscores file not found. Please create a file 'highscores.txt' in the game folder.",'Red')
         print('Your score was not recorded.')
     return 'main'
+
+def popup(word, colour):
+    global popup_words, popup_ticks, popup_colour
+    popup_words.append(word)
+    popup_ticks.append(0)
+    popup_colour.append(colour)
 
 #-------------GAME----------------#
 game_state = 'main'
@@ -715,7 +735,9 @@ while True:
                         sell = keyPressed
                     elif keyPressed == 'h' and game_state == 'highscore':
                         game_state = 'main'
-                        highscore_words = []    
+                        highscore_words = []
+                    elif keyPressed == 'o':
+                        popup("Save file not found. Please create a file 'savefile.json' in the game folder.",'Red')
 
     if game_state == 'main':
         show_main_menu(game_state)
@@ -724,7 +746,7 @@ while True:
             initialize_game(game_map, player)
             name = ''
             transition_screen = transition_speed
-            transition_state = 'name'
+            transition_state = '1'
             ore_price = set_ore_price()
 
         elif choice == 'l':
@@ -732,15 +754,15 @@ while True:
             try:
                 with open('savefile.json', 'r') as textfile:
                     if len(textfile.readlines()) == 0:
-                        print('No save data found.')
+                        popup('No save data found.','Red')
                     else:
                         game_map, fog, player = load_game('savefile.json')
                         transition_screen = transition_speed
                         transition_state = 'town'
                         ore_price = set_ore_price()
-                        print('Game loaded.')
+                        popup('Game loaded.','Green')
             except:
-                print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
+                popup("Save file not found. Please create a file 'savefile.json' in the folder.",'Red')
         
         elif choice == 'h':
             game_state = 'highscore'
@@ -777,18 +799,10 @@ while True:
         pygame.draw.rect(screen,'White', nameInput_rect, 0, 20)
         pygame.draw.rect(screen,'Black', nameInput_rect, 6, 20)
         
-        body_surf = gameBody_font.render(name, True, 'Red')
+        body_surf = gameBody_font.render(name, True, 'Blue')
         body_rect = body_surf.get_rect(center = (400,200))
         screen.blit(body_surf, body_rect)
-        '''
-        print("---------------- Welcome to Sundrop Caves! ----------------")
-        print("You spent all your money to get the deed to a mine, a small")
-        print("  backpack, a simple pickaxe and a magical portal stone.")
-        print()
-        print("How quickly can you get the 500 GP you need to retire")
-        print("  and live happily ever after?")
-        print("-----------------------------------------------------------")
-        '''
+
         key = ''
 
     if game_state == 'highscore':
@@ -821,9 +835,9 @@ while True:
             #Save Game
             try:
                 save_data = save_game(game_map, fog, player, 'savefile.json')
-                print('Game Saved.')
+                popup('Game Saved.','Green')
             except:
-                print("Save file not found. Please create a file 'savefile.json' in the same folder as the game.")
+                popup("Save file not found. Please create a file 'savefile.json' in the game folder.",'Red')
 
         elif move == 'q':
             #Back to main menu
@@ -840,30 +854,30 @@ while True:
             if player['GP'] >= pickaxe_price[player['pickaxe'] - 1]:
                 player['GP'] -= pickaxe_price[player['pickaxe'] - 1]
                 player['pickaxe'] += 1
-                print(f'Congratulations! You can now mine {minerals[player['pickaxe'] - 1]}!')
+                popup(f'Congratulations! You can now mine {minerals[player['pickaxe'] - 1]}!','Blue')
             else:
-                print('You do not have enough GP!')
+                popup('You do not have enough GP!','Red')
 
         elif option == 'b':
             #Upgrade Backpack
             if player['GP'] >= player['backpack'] * 2:
                 player['GP'] -= player['backpack'] * 2
                 player['backpack'] += 2
-                print(f'Congratulations! You can now carry {player['backpack']} items!')
+                popup(f'Congratulations! You can now carry {player['backpack']} items!','Blue')
             else:
-                print('You do not have enough GP!')
+                popup('You do not have enough GP!','Red')
 
         elif option == 'm' and player['torch'] == 3:
             #Buy magic torch
             if player['GP'] >= 50:
                 player['GP'] -= 50
                 player['torch'] = 5
-                print(f'Congratulations! You can now view in a 5x5 radius!')
+                popup(f'Congratulations! You can now view in a 5x5 radius!','Blue')
             else:
-                print('You do not have enough GP!')
+                popup('You do not have enough GP!','Red')
 
         elif option == 'l':
-            print('Bye! See you again!')
+            popup('Bye! See you again!','Blue')
             #Leave
             transition_screen = transition_speed
             transition_state = 'town'
@@ -883,7 +897,7 @@ while True:
             sell_ore(False, False, True)
 
         elif sell == 'l':
-            print('Bye, See you again! New ore prices daily!')
+            popup('Bye, See you again! New ore prices daily!','Blue')
             transition_screen = transition_speed
             transition_state = 'town'
         
@@ -1032,6 +1046,46 @@ while True:
     if infostatePrev != '':
         show_information(player, infostatePrev)               
     
+    if len(popup_words) != 0:
+        for i in range(len(popup_words) - 1, -1, -1):
+            body_surf = gameBody_font.render(popup_words[i], True, popup_colour[i])
+            body_rect = body_surf.get_rect(center = (400, popup_ticks[i] / 4 + 70))
+            body_surf.set_alpha(255 - popup_ticks[i] * 1.5)
+            popup_ticks[i] += 1
+            if popup_ticks[i] * 1.5 >= 255:
+                popup_words.pop(i)
+                popup_ticks.pop(i)
+                popup_colour.pop(i)
+            screen.blit(body_surf, body_rect)
+
+    #Intro
+    if game_state == '1':
+        if transition_opacity == 0:
+            transition_screen = 0.75
+            transition_state = '2'
+        title_surf = gameMain_font.render('Welcome to Sundrop Caves!', True, 'Brown')
+        title_rect = title_surf.get_rect(center = (400,200))
+        screen.blit(title_surf, title_rect)
+
+    if game_state == '2':
+        if transition_opacity == 0:
+            transition_screen = 0.75
+            transition_state = '3'
+        for word in intro2_words:
+            body_surf = gameBody_font.render(word, True, 'Brown')
+            body_rect = body_surf.get_rect(center = (400,175 + 50 * intro2_words.index(word)))
+            screen.blit(body_surf, body_rect)
+
+    if game_state == '3':
+        if transition_opacity == 0:
+            transition_screen = 0.75
+            transition_state = 'name'
+        for word in intro3_words:
+            body_surf = gameBody_font.render(word, True, 'Brown')
+            body_rect = body_surf.get_rect(center = (400,175 + 50 * intro3_words.index(word)))
+            screen.blit(body_surf, body_rect)
+    #Intro
+
     if transition_screen != 0:
         transition_opacity += transition_screen
         trans_screen.set_alpha(transition_opacity)
