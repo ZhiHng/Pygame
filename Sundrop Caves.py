@@ -782,6 +782,7 @@ while True:
                 name = name[:-1]
             elif key == 'enter':
                 player['name'] = name
+                popup(f'Pleased to meet you, {name}. Welcome to Sundrop Town!','coral')
                 transition_screen = transition_speed
                 transition_state = 'town'
             elif len(name) < 10 and key != 'backspace' and key != 'enter':
@@ -1059,9 +1060,9 @@ while True:
     #Intro
     if game_state == '1':
         if transition_opacity == 0:
-            transition_screen = 0.75
+            transition_screen = 1
             transition_state = '2'
-        title_surf = gameMain_font.render('Welcome to Sundrop Caves!', True, 'Brown')
+        title_surf = gameMain_font.render('Welcome to Sundrop Caves!', True, 'Orange')
         title_rect = title_surf.get_rect(center = (400,200))
         screen.blit(title_surf, title_rect)
 
@@ -1070,7 +1071,7 @@ while True:
             transition_screen = 0.75
             transition_state = '3'
         for word in intro2_words:
-            body_surf = gameBody_font.render(word, True, 'Brown')
+            body_surf = gameBody_font.render(word, True, 'Orange')
             body_rect = body_surf.get_rect(center = (400,175 + 50 * intro2_words.index(word)))
             screen.blit(body_surf, body_rect)
 
@@ -1079,7 +1080,7 @@ while True:
             transition_screen = 0.75
             transition_state = 'name'
         for word in intro3_words:
-            body_surf = gameBody_font.render(word, True, 'Brown')
+            body_surf = gameBody_font.render(word, True, 'Orange')
             body_rect = body_surf.get_rect(center = (400,175 + 50 * intro3_words.index(word)))
             screen.blit(body_surf, body_rect)
     #Intro
