@@ -84,12 +84,20 @@ charFront = [charAnims[13], charAnims[16], charAnims[19], charAnims[22]]
 charBack = [charAnims[49], charAnims[52], charAnims[55], charAnims[58]]
 charLeft = [pygame.transform.flip(charAnims[85],True,False), pygame.transform.flip(charAnims[88],True,False), pygame.transform.flip(charAnims[91],True,False), pygame.transform.flip(charAnims[94],True,False)]
 charRight = [charAnims[85], charAnims[88], charAnims[91], charAnims[94]]
+charMineFront = [charAnims[157], charAnims[160], charAnims[163], charAnims[166]]
+charMineBack = [charAnims[193], charAnims[196], charAnims[199], charAnims[202]]
+charMineLeft = [pygame.transform.flip(charAnims[229],True,False), pygame.transform.flip(charAnims[232],True,False), pygame.transform.flip(charAnims[235],True,False), pygame.transform.flip(charAnims[238],True,False)]
+charMineRight = [charAnims[229], charAnims[232], charAnims[235], charAnims[238]]
 
 #Character animations
 walkFront = [charFront[0], charFront[1], charFront[0], charFront[3], charFront[0]]
 walkBack = [charBack[0], charBack[1], charBack[0], charBack[3], charBack[0]]
 walkLeft = [charLeft[0], charLeft[1], charLeft[0], charLeft[3], charLeft[0]]
 walkRight = [charRight[0], charRight[1], charRight[0], charRight[3], charRight[0]]
+mineFront = [charFront[0], charMineFront[0], charMineFront[1], charMineFront[2], charMineFront[3], charFront[0]]
+mineBack = [charBack[0], charMineBack[0], charMineBack[1], charMineBack[2], charMineBack[3], charBack[0]]
+mineLeft = [charLeft[0], charMineLeft[0], charMineLeft[1], charMineLeft[2], charMineLeft[3], charLeft[0]]
+mineRight = [charRight[0], charMineRight[0], charMineRight[1], charMineRight[2], charMineRight[3], charRight[0]]
 idleFront = [charFront[0], charFront[2]]
 idleBack = [charBack[0], charBack[2]]
 idleLeft = [charLeft[0], charLeft[2]]
@@ -454,9 +462,9 @@ def show_main_menu(state):
                 body_rect = body_surf.get_rect(center = (400,150))
                 screen.blit(body_surf, body_rect)
             else:
-                for word in highscore_words:
-                    body_surf = gameBody_font.render(word, True, 'Black')
-                    body_rect = body_surf.get_rect(midleft = (290,105 + 25 * highscore_words.index(word)))
+                for i in range(len(highscore_words)):
+                    body_surf = gameBody_font.render(highscore_words[i], True, 'Black')
+                    body_rect = body_surf.get_rect(midleft = (290,105 + 25 * i))
                     screen.blit(body_surf, body_rect)
         except:
             popup("Highscores file not found. Please create a file 'highscores.txt' in the game folder.",'Red')
@@ -674,18 +682,22 @@ def load_highscores(highscore_file):
         raise FileNotFoundError
 
 def game_end(highscore_file):
-    print('-------------------------------------------------------------')
-    print(f'Woo-hoo! Well done, {player['name']}, you have {player['GP']} GP!')
-    print('You now have enough to retire and play video games every day.')
-    print(f'And it only took you {player['day']} days and {player['total_steps']} steps! You win!')
-    print('-------------------------------------------------------------')
-    try:
-        with open(highscore_file, 'a') as textfile:
-            textfile.write(str(player['day']) + ',' + player['name'] + ',' + str(player['GP']) + ',' + str(player['total_steps']) + '\n')
-    except:
-        popup("Highscores file not found. Please create a file 'highscores.txt' in the game folder.",'Red')
-        print('Your score was not recorded.')
-    return 'main'
+    global transition_screen, transition_state
+    if transition_screen == 0:
+        print('-------------------------------------------------------------')
+        print(f'Woo-hoo! Well done, {player['name']}, you have {player['GP']} GP!')
+        print('You now have enough to retire and play video games every day.')
+        print(f'And it only took you {player['day']} days and {player['total_steps']} steps! You win!')
+        print('-------------------------------------------------------------')
+        try:
+            with open(highscore_file, 'a') as textfile:
+                textfile.write(str(player['day']) + ',' + player['name'] + ',' + str(player['GP']) + ',' + str(player['total_steps']) + '\n')
+        except:
+            popup("Highscores file not found. Please create a file 'highscores.txt' in the game folder.",'Red')
+            print('Your score was not recorded.')
+
+    transition_screen = transition_speed
+    transition_state = 'main'
 
 def popup(word, colour):
     global popup_words, popup_ticks, popup_colour
@@ -904,14 +916,13 @@ while True:
             transition_state = 'town'
         
         if player['GP'] >= WIN_GP:
-            transition_screen = transition_speed
-            transition_state = game_end('highscores.txt')
+            game_end('highscores.txt')
         
         sell = ''
 
     #Mine Code
     if game_state == 'mine':
-        if moving == False:
+        if moving == False and mining == False:
             if action == 'w' or action == 'a' or action == 's' or action == 'd':
                 view = draw_view(game_map, player)
                 movement(action, view)
@@ -936,13 +947,28 @@ while True:
         #Animations
         if mining == True:
             cycles += 1
-            if cycles == 20:
+            if upDown != 0:
+                if upDown == 1:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = mineFront[int((cycles / 4) - 1) % 6]
+                else:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = mineBack[int((cycles / 4) - 1) % 6]       
+            else:
+                if leftRight == 1:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = mineRight[int((cycles / 4) - 1) % 6] 
+                else:
+                    if cycles % 4 == 0 and cycles != 0:
+                        playerAnim = mineLeft[int((cycles / 4) - 1) % 6] 
+
+            if cycles == 48:
                 mining = False
                 moving = True
                 cycles = 0
                 game_map[oreMinedY][oreMinedX] = ''
 
-        if moving == True:
+        elif moving == True:
             cycles += 1
             if upDown != 0:
                 player['y'] += upDown * 0.05
