@@ -287,7 +287,7 @@ def movement(direction, view):
     clear_fog(player)
 
 def determine_grid_and_action(row, col, view):
-    global moving, leftRight, upDown
+    global moving, leftRight, upDown, mining, oreMinedX, oreMinedY
 
     #Row (dictionary) - 1, 2, 3
     #Col (string format) - '012'
@@ -329,9 +329,10 @@ def determine_grid_and_action(row, col, view):
         if calculate_load() != player['backpack']:
             #Move
             game_map[player['y']][player['x']] = ' ' #Remove Previous Location from Gamemap
-            moving = True
+            mining = True
             determine_updownleftright(col - difference, row - difference - 1)
-            game_map[player['y']][player['x']] = ' ' #Remove Ore Mined from gamemap
+            oreMinedX, oreMinedY = player['x'] + leftRight, player['y'] + upDown
+
 
             #Add Count to the desired ore and only adds up to max load
             ore_count = randint(1, minerals_per_node_max[mineral_names[view[row][col]]])
@@ -698,7 +699,7 @@ action = choice = move = option = sell = key = ''
 name = ''
 highscore_words = []
 #Player animation variables
-moving, upDown, leftRight, cycles, playerAnim = False, 0, 0, 0, charFront[0]
+moving, mining, upDown, leftRight, cycles, playerAnim = False, False, 0, 0, 0, charFront[0]
 transition_screen, transition_opacity, transition_state = 0, 0, ''
 portal = False
 
@@ -932,6 +933,14 @@ while True:
         action = ''
 
         #Animations
+        if mining == True:
+            cycles += 1
+            if cycles == 20:
+                mining = False
+                moving = True
+                cycles = 0
+                game_map[oreMinedY][oreMinedX] = ''
+
         if moving == True:
             cycles += 1
             if upDown != 0:
@@ -960,6 +969,7 @@ while True:
                 clear_fog(player)
                 player['steps'] += 1
                 player['total_steps'] += 1
+
         else:
             current_tick = pygame.time.get_ticks()
             if current_tick - last_frame_time > frame_duration:
@@ -1045,18 +1055,6 @@ while True:
 
     if infostatePrev != '':
         show_information(player, infostatePrev)               
-    
-    if len(popup_words) != 0:
-        for i in range(len(popup_words) - 1, -1, -1):
-            body_surf = gameBody_font.render(popup_words[i], True, popup_colour[i])
-            body_rect = body_surf.get_rect(center = (400, popup_ticks[i] / 4 + 70))
-            body_surf.set_alpha(255 - popup_ticks[i] * 1.5)
-            popup_ticks[i] += 1
-            if popup_ticks[i] * 1.5 >= 255:
-                popup_words.pop(i)
-                popup_ticks.pop(i)
-                popup_colour.pop(i)
-            screen.blit(body_surf, body_rect)
 
     #Intro
     if game_state == '1':
@@ -1100,6 +1098,18 @@ while True:
         if transition_screen == -transition_speed and transition_opacity <= 0:
             transition_screen = 0
             transition_opacity = 0
+
+    if len(popup_words) != 0:
+        for i in range(len(popup_words) - 1, -1, -1):
+            body_surf = gameBody_font.render(popup_words[i], True, popup_colour[i])
+            body_rect = body_surf.get_rect(center = (400, popup_ticks[i] / 4 + 70))
+            body_surf.set_alpha(255 - popup_ticks[i] * 1.5)
+            popup_ticks[i] += 1
+            if popup_ticks[i] * 1.5 >= 255:
+                popup_words.pop(i)
+                popup_ticks.pop(i)
+                popup_colour.pop(i)
+            screen.blit(body_surf, body_rect)
 
     pygame.display.update()
     clock.tick(60)
