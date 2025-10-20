@@ -73,21 +73,21 @@ botLeft, botMid, botRight = tiles[36], tiles[37], tiles[38]
 charSheet = pygame.image.load('Assets/DwarvenDelve/DwarvenDelve/Characters/Dwarf/BlueMiner.png').convert_alpha()
 charAnims = []
 map_width, map_height = charSheet.get_size()
-for y in range(0, map_height, TILE_HEIGHT):
-    for x in range(0, map_width, TILE_WIDTH):
-        rect = pygame.Rect(x, y, TILE_WIDTH, TILE_HEIGHT)
+for y in range(0, map_height, 48):
+    for x in range(0, map_width, 48):
+        rect = pygame.Rect(x, y, 48, 48)
         tile = charSheet.subsurface(rect)
-        scaled_tile = pygame.transform.scale(tile, TILE_SIZE)  # Double the size
+        scaled_tile = pygame.transform.scale(tile, (TILE_SIZE[0]*3,TILE_SIZE[1]*3))
         charAnims.append(scaled_tile)
 
-charFront = [charAnims[13], charAnims[16], charAnims[19], charAnims[22]]
-charBack = [charAnims[49], charAnims[52], charAnims[55], charAnims[58]]
-charLeft = [pygame.transform.flip(charAnims[85],True,False), pygame.transform.flip(charAnims[88],True,False), pygame.transform.flip(charAnims[91],True,False), pygame.transform.flip(charAnims[94],True,False)]
-charRight = [charAnims[85], charAnims[88], charAnims[91], charAnims[94]]
-charMineFront = [charAnims[157], charAnims[160], charAnims[163], charAnims[166]]
-charMineBack = [charAnims[193], charAnims[196], charAnims[199], charAnims[202]]
-charMineLeft = [pygame.transform.flip(charAnims[229],True,False), pygame.transform.flip(charAnims[232],True,False), pygame.transform.flip(charAnims[235],True,False), pygame.transform.flip(charAnims[238],True,False)]
-charMineRight = [charAnims[229], charAnims[232], charAnims[235], charAnims[238]]
+charFront = [charAnims[0], charAnims[1], charAnims[2], charAnims[3]]
+charBack = [charAnims[4], charAnims[5], charAnims[6], charAnims[7]]
+charLeft = [pygame.transform.flip(charAnims[8],True,False), pygame.transform.flip(charAnims[9],True,False), pygame.transform.flip(charAnims[10],True,False), pygame.transform.flip(charAnims[11],True,False)]
+charRight = [charAnims[8], charAnims[9], charAnims[10], charAnims[11]]
+charMineFront = [charAnims[16], charAnims[17], charAnims[18], charAnims[19]]
+charMineBack = [charAnims[20], charAnims[21], charAnims[22], charAnims[23]]
+charMineLeft = [pygame.transform.flip(charAnims[24],True,False), pygame.transform.flip(charAnims[25],True,False), pygame.transform.flip(charAnims[26],True,False), pygame.transform.flip(charAnims[27],True,False)]
+charMineRight = [charAnims[24], charAnims[25], charAnims[26], charAnims[27]]
 
 #Character animations
 walkFront = [charFront[0], charFront[1], charFront[0], charFront[3], charFront[0]]
@@ -1071,7 +1071,7 @@ while True:
                         wallTile = wall[0]
                     screen.blit(wallTile, (round(tileX), round(tileY - TILE_SIZE[1])))
 
-        screen.blit(playerAnim, (MID_SCREENX,MID_SCREENY - TILE_SIZE[1] / 8))
+        screen.blit(playerAnim, (MID_SCREENX - TILE_SIZE[0],MID_SCREENY - TILE_SIZE[1] - TILE_SIZE[1] / 8))
 
         if portal == True:
             current_tick = pygame.time.get_ticks()
