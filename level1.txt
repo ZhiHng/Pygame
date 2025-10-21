@@ -8,3 +8,7 @@ CCCCCCCC       G   CCCC
   CCCCC      GG           SS  
    CCCCC      GGG       SSSSSS
       CCC      GGG      SSSGGG
+            SS         SSSGGGG
+  GGG     SSSSS   CC     SGGG 
+GGGGG       SSS    CC         
+GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG

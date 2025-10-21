@@ -135,7 +135,7 @@ MAP_HEIGHT = 0
 
 WAREHOUSE_SIZE = 20
 TURNS_PER_DAY = 20
-WIN_GP = 500
+WIN_GP = 1000
 
 minerals = ['copper', 'silver', 'gold']
 mineral_names = {'C': 'copper', 'S': 'silver', 'G': 'gold'}
@@ -751,6 +751,12 @@ while True:
                         highscore_words = []
                     elif keyPressed == 'o':
                         popup("Save file not found. Please create a file 'savefile.json' in the game folder.",'Red')
+            '''
+            elif keyPressed == 'q' and (game_state == '1' or game_state == '2' or game_state == '3'):
+                transition_opacity = 0
+                transition_screen = transition_speed
+                transition_state = 'name'
+                '''
 
     if game_state == 'main':
         show_main_menu(game_state)
