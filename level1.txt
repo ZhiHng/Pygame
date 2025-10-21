@@ -10,5 +10,6 @@ CCCCCCCC       G   CCCC
       CCC      GGG      SSSGGG
             SS         SSSGGGG
   GGG     SSSSS   CC     SGGG 
-GGGGG       SSS    CC         
-GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GGGGGGG     SSS    CC         
+GGGGGGGGG                     
+GGGGGGGGGGGGGGGGGGGGSSSSSSSSSC

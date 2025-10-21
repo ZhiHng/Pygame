@@ -21,8 +21,11 @@ frame_duration_town = 10000
 frame_duration_portal = 200
 frame_index = 0
 
+WIN_GP = 1000
+
 gameMain_font = pygame.font.SysFont('ravie', 22)
-gameBody_font = pygame.font.SysFont('cooperblack', 20)
+#gameBody_font = pygame.font.SysFont('cooperblack', 20)
+gameBody_font = pygame.font.SysFont('comicsans', 20)
 cave_background = pygame.transform.scale(pygame.image.load('Assets/Cave.png').convert_alpha(), SCREEN_SIZE)
 town_background = pygame.image.load('Assets/Town.png').convert_alpha() #2048 : 1440
 changeX = changeY = 0
@@ -45,7 +48,7 @@ transition_speed = 10
 main_words = ['(N)ew Game', '(L)oad Saved Game', '(H)igh Scores', '(Q)uit']
 town_words = ['(B)uy Stuff', '(S)ell Ores', 'See Player (I)nformation', '(E)nter Mine', 'Sa(V)e Game', '(Q)uit to Main Menu']
 intro2_words = ['You spent all your money to get the deed to a mine, a small','backpack, a simple pickaxe and a magical portal stone.']
-intro3_words = ['How quickly can you get the 500 GP you need to retire','and live happily ever after?']
+intro3_words = [f'How quickly can you get the {WIN_GP} GP you need to retire','and live happily ever after?']
 popup_words = []
 popup_ticks = []
 popup_colour = []
@@ -134,8 +137,8 @@ MAP_WIDTH = 0
 MAP_HEIGHT = 0
 
 WAREHOUSE_SIZE = 20
-TURNS_PER_DAY = 20
-WIN_GP = 1000
+TURNS_PER_DAY = 200
+
 
 minerals = ['copper', 'silver', 'gold']
 mineral_names = {'C': 'copper', 'S': 'silver', 'G': 'gold'}
