@@ -137,7 +137,7 @@ MAP_WIDTH = 0
 MAP_HEIGHT = 0
 
 WAREHOUSE_SIZE = 20
-TURNS_PER_DAY = 200
+TURNS_PER_DAY = 20
 
 
 minerals = ['copper', 'silver', 'gold']
@@ -727,6 +727,7 @@ while True:
             pygame.quit()
             exit()
         if event.type == pygame.KEYDOWN:
+            keyPressed = pygame.key.name(event.key).lower()
             if transition_screen == 0:
                 if game_state == 'name':
                     if event.key == pygame.K_BACKSPACE:
@@ -736,8 +737,7 @@ while True:
                     elif event.unicode and event.unicode.isprintable():
                         key = event.unicode
                 else:
-                    keyPressed = pygame.key.name(event.key).lower()
-                    if keyPressed == 'i' and infostatePrev != '':
+                    if keyPressed == 'escape' and infostatePrev != '':
                         infostatePrev = ''
                     elif (keyPressed == 'w' or keyPressed == 'a' or keyPressed == 's' or keyPressed == 'd' or keyPressed == 'i' or keyPressed == 'p' or keyPressed == 'q') and game_state == 'mine' and infostatePrev == '':
                         action = keyPressed
@@ -749,18 +749,17 @@ while True:
                         option = keyPressed
                     elif (keyPressed == 'c' or keyPressed == 's' or keyPressed == 'g' or keyPressed == 'l') and game_state == 'sell':
                         sell = keyPressed
-                    elif keyPressed == 'h' and game_state == 'highscore':
+                    elif keyPressed == 'escape' and game_state == 'highscore':
                         game_state = 'main'
                         highscore_words = []
-                    elif keyPressed == 'o':
-                        popup("Save file not found. Please create a file 'savefile.json' in the game folder.",'Red')
-            '''
-            elif keyPressed == 'q' and (game_state == '1' or game_state == '2' or game_state == '3'):
+            
+            elif keyPressed == 'space' and (game_state == '1' or game_state == '2' or game_state == '3'):
                 transition_opacity = 0
+                transition_screen = 0
+                game_state = 'main'
                 transition_screen = transition_speed
                 transition_state = 'name'
-                '''
-
+                
     if game_state == 'main':
         show_main_menu(game_state)
         if choice == 'n':
@@ -935,8 +934,6 @@ while True:
             if action == 'w' or action == 'a' or action == 's' or action == 'd':
                 view = draw_view(game_map, player)
                 movement(action, view)
-                if player['steps'] == player['turns']:
-                    portal_stone(True)
 
             elif action == 'i':
                 #View Information
@@ -1005,6 +1002,8 @@ while True:
                 clear_fog(player)
                 player['steps'] += 1
                 player['total_steps'] += 1
+                if player['steps'] == player['turns']:
+                    portal_stone(True)
 
         else:
             current_tick = pygame.time.get_ticks()
@@ -1088,6 +1087,14 @@ while True:
                 frame_index = (frame_index + 1) % len(portalAnims)
                 last_frame_time = current_tick
             screen.blit(portalAnims[frame_index], (MID_SCREENX - TILE_SIZE[0] / 1.5, MID_SCREENY - TILE_SIZE[1]))
+
+        
+        body_surf = gameBody_font.render(f'Steps left: {player['turns'] - player['steps']}', True, 'Yellow')
+        body_rect = body_surf.get_rect(topleft = (30,20))
+        screen.blit(body_surf, body_rect)
+        body_surf = gameBody_font.render(f'Load: {calculate_load()} / {player['backpack']}', True, 'Yellow')
+        body_rect = body_surf.get_rect(topright = (770,20))
+        screen.blit(body_surf, body_rect)
 
     if infostatePrev != '':
         show_information(player, infostatePrev)               
